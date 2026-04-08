@@ -234,31 +234,27 @@ window.createTeamUser = async function({ name, email, password, role }) {
     const hostelId = await window.getCurrentHostelId();
     if (!hostelId) throw new Error('No se encontró el hostel del administrador');
 
-    // 1. Crear usuario en Supabase Auth
-    const { data, error: signUpError } = await db.auth.signUp({
+    // 1. Crear usuario con la Admin API: email ya confirmado, sin email de verificación
+    //    Requiere que SUPABASE_SERVICE_KEY esté configurado en supabase-config.js
+    const { data, error: createError } = await adminDb.auth.admin.createUser({
         email,
         password,
-        options: { data: { full_name: name } }
+        email_confirm: true,
+        user_metadata: { full_name: name }
     });
 
-    if (signUpError) throw new Error(signUpError.message);
+    if (createError) throw new Error(createError.message);
 
     const userId = data?.user?.id;
     if (!userId) throw new Error('No se pudo obtener el ID del nuevo usuario');
 
-    // 2. Vincular perfil al hostel con el rol indicado
+    // 2. Upsert del perfil con hostel_id y rol
+    //    Upsert directo cubre ambos casos: perfil ya creado por trigger o no
     const { error: profileError } = await db
         .from('profiles')
-        .update({ full_name: name, role, hostel_id: hostelId })
-        .eq('id', userId);
+        .upsert({ id: userId, email, full_name: name, role, hostel_id: hostelId }, { onConflict: 'id' });
 
-    if (profileError) {
-        // Si el trigger aún no creó el perfil, intentar upsert
-        const { error: upsertError } = await db
-            .from('profiles')
-            .upsert({ id: userId, email, full_name: name, role, hostel_id: hostelId }, { onConflict: 'id' });
-        if (upsertError) throw new Error(upsertError.message);
-    }
+    if (profileError) throw new Error(profileError.message);
 };
 
 window.logout = logout;

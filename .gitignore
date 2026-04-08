@@ -1,0 +1,3 @@
+# Secrets — NUNCA subir a GitHub
+.env
+js/env.js

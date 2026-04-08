@@ -1,7 +1,16 @@
 const SUPABASE_URL = 'https://levyqqmgvnzdpqhnyguy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxldnlxcW1ndm56ZHBxaG55Z3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MDU0ODgsImV4cCI6MjA5MTE4MTQ4OH0.E-G8hExbN4Lv872fMclL7AGvAqNlpqVI_dXtPuVjfmQ';
 
+// Service role key — cargada desde js/env.js (gitignoreado)
+// Para configurar: copia js/env.example.js → js/env.js y pon tu clave real
+const SUPABASE_SERVICE_KEY = (window.__ENV && window.__ENV.SUPABASE_SERVICE_KEY) || '';
+
 window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Cliente admin: no guarda sesión propia, no interfiere con la sesión del admin logueado
+window.adminDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false }
+});
 
 // =====================================================
 // MULTI-TENANT HELPER — hostel_id del usuario actual
