@@ -234,28 +234,14 @@ window.createTeamUser = async function({ name, email, password, role }) {
     const hostelId = await window.getCurrentHostelId();
     if (!hostelId) throw new Error('No se encontró el hostel del administrador');
 
-    // 1. Crear usuario con la Admin API: email ya confirmado, sin email de verificación
-    //    adminDb se inicializa de forma asíncrona desde /api/config (Vercel env var)
-    const adminDb = await window.adminDbReady;
-    const { data, error: createError } = await adminDb.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: name }
+    const res = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, fullName: name, role, hostelId })
     });
 
-    if (createError) throw new Error(createError.message);
-
-    const userId = data?.user?.id;
-    if (!userId) throw new Error('No se pudo obtener el ID del nuevo usuario');
-
-    // 2. Upsert del perfil con hostel_id y rol
-    //    Upsert directo cubre ambos casos: perfil ya creado por trigger o no
-    const { error: profileError } = await db
-        .from('profiles')
-        .upsert({ id: userId, email, full_name: name, role, hostel_id: hostelId }, { onConflict: 'id' });
-
-    if (profileError) throw new Error(profileError.message);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al crear el usuario');
 };
 
 window.logout = logout;
