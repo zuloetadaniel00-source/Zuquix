@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0c0a09">
+    <title>Registrar Hostel — Zuquix</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* ── Register-specific overrides ── */
+        body { background: var(--bg); min-height: 100dvh; }
+
+        .register-screen {
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6) var(--space-4);
+        }
+
+        .register-container {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-8);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .register-logo {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        .register-logo h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.03em;
+            margin: 0;
+        }
+        .register-logo p {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+            margin: 4px 0 0;
+        }
+
+        /* Steps indicator */
+        .steps-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: var(--space-6);
+        }
+        .step-dot {
+            width: 32px; height: 32px;
+            border-radius: var(--radius-full);
+            background: var(--gray-200);
+            color: var(--gray-500);
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .step-dot.active {
+            background: var(--primary);
+            color: white;
+        }
+        .step-dot.done {
+            background: var(--success);
+            color: white;
+        }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--gray-200);
+            transition: background 0.3s;
+        }
+        .step-line.done { background: var(--success); }
+
+        .step-label {
+            font-size: 0.7rem;
+            color: var(--gray-400);
+            font-weight: 600;
+            text-align: center;
+            margin-top: 4px;
+        }
+        .step-wrapper { display: flex; flex-direction: column; align-items: center; }
+
+        /* Forms */
+        .register-step { display: none; }
+        .register-step.active { display: block; }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin: 0 0 var(--space-5);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+        }
+        @media (max-width: 400px) { .form-row { grid-template-columns: 1fr; } }
+
+        .btn-nav {
+            display: flex;
+            gap: var(--space-3);
+            margin-top: var(--space-6);
+        }
+
+        .error-message {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-radius: var(--radius);
+            padding: var(--space-3) var(--space-4);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: var(--space-3);
+            display: none;
+        }
+        .error-message.show { display: block; }
+
+        .login-link {
+            text-align: center;
+            margin-top: var(--space-5);
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        .login-link a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .login-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="register-screen">
+    <div class="register-container">
+        <div class="register-logo">
+            <h1>Zuquix</h1>
+            <p>Plataforma de gestión para hostels</p>
+        </div>
+
+        <!-- Steps indicator -->
+        <div class="steps-indicator">
+            <div class="step-wrapper">
+                <div class="step-dot active" id="dot-1">1</div>
+                <div class="step-label">Tu hostel</div>
+            </div>
+            <div class="step-line" id="line-1"></div>
+            <div class="step-wrapper">
+                <div class="step-dot" id="dot-2">2</div>
+                <div class="step-label">Tu cuenta</div>
+            </div>
+        </div>
+
+        <!-- STEP 1: Hostel data -->
+        <div class="register-step active" id="step-1">
+            <p class="step-title">Datos de tu hostel</p>
+            <div class="form-group">
+                <label>Nombre del hostel <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="hostel-name" required placeholder="Ej: Hostel Sol Panamá" maxlength="100">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ciudad</label>
+                    <input type="text" id="hostel-city" placeholder="Ciudad de Panamá">
+                </div>
+                <div class="form-group">
+                    <label>País</label>
+                    <select id="hostel-country">
+                        <option value="PA" selected>Panamá</option>
+                        <option value="CR">Costa Rica</option>
+                        <option value="CO">Colombia</option>
+                        <option value="MX">México</option>
+                        <option value="PE">Perú</option>
+                        <option value="AR">Argentina</option>
+                        <option value="CL">Chile</option>
+                        <option value="ES">España</option>
+                        <option value="US">Estados Unidos</option>
+                        <option value="OT">Otro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="hostel-address" placeholder="Calle, número, barrio">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="hostel-phone" placeholder="+507 6000-0000">
+                </div>
+                <div class="form-group">
+                    <label>Zona horaria</label>
+                    <select id="hostel-timezone">
+                        <option value="America/Panama" selected>Panamá (UTC-5)</option>
+                        <option value="America/Costa_Rica">Costa Rica (UTC-6)</option>
+                        <option value="America/Bogota">Colombia (UTC-5)</option>
+                        <option value="America/Mexico_City">México Centro (UTC-6)</option>
+                        <option value="America/Lima">Perú (UTC-5)</option>
+                        <option value="America/Argentina/Buenos_Aires">Argentina (UTC-3)</option>
+                        <option value="America/Santiago">Chile (UTC-3/-4)</option>
+                        <option value="Europe/Madrid">España (UTC+1/+2)</option>
+                        <option value="America/New_York">Este USA (UTC-5/-4)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-nav">
+                <button type="button" class="btn btn-primary" style="flex:1" onclick="goToStep2()">
+                    Continuar
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:6px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Admin data -->
+        <div class="register-step" id="step-2">
+            <p class="step-title">Crea tu cuenta de administrador</p>
+            <div class="form-group">
+                <label>Nombre completo <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="admin-name" required placeholder="Tu nombre completo" maxlength="80">
+            </div>
+            <div class="form-group">
+                <label>Email <span style="color:var(--danger)">*</span></label>
+                <input type="email" id="admin-email" required placeholder="tu@email.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Contraseña <span style="color:var(--danger)">*</span></label>
+                <input type="password" id="admin-password" required placeholder="Mínimo 8 caracteres" autocomplete="new-password" minlength="8">
+            </div>
+            <div class="form-group">
+                <label>Confirmar contraseña <span style="color:var(--danger)">*</span></label>
+                <input type="password" id="admin-password-confirm" required placeholder="Repite la contraseña" autocomplete="new-password" minlength="8">
+            </div>
+
+            <div id="register-error" class="error-message"></div>
+
+            <div class="btn-nav">
+                <button type="button" class="btn btn-secondary" style="flex:0.4" onclick="goToStep1()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Atrás
+                </button>
+                <button type="button" class="btn btn-primary" style="flex:1" id="register-btn" onclick="submitRegistration()">
+                    Crear cuenta
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:6px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="login-link">
+            ¿Ya tienes cuenta? <a href="app.html">Inicia sesión</a>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script>
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+        toast.textContent = `${icons[type] || '•'} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px) scale(0.9)';
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    function goToStep2() {
+        const name = document.getElementById('hostel-name').value.trim();
+        if (!name) {
+            showToast('El nombre del hostel es obligatorio', 'error');
+            document.getElementById('hostel-name').focus();
+            return;
+        }
+        document.getElementById('step-1').classList.remove('active');
+        document.getElementById('step-2').classList.add('active');
+        document.getElementById('dot-1').classList.remove('active');
+        document.getElementById('dot-1').classList.add('done');
+        document.getElementById('dot-1').innerHTML = '✓';
+        document.getElementById('dot-2').classList.add('active');
+        document.getElementById('line-1').classList.add('done');
+    }
+
+    function goToStep1() {
+        document.getElementById('step-2').classList.remove('active');
+        document.getElementById('step-1').classList.add('active');
+        document.getElementById('dot-2').classList.remove('active');
+        document.getElementById('dot-1').classList.remove('done');
+        document.getElementById('dot-1').classList.add('active');
+        document.getElementById('dot-1').innerHTML = '1';
+        document.getElementById('line-1').classList.remove('done');
+    }
+
+    async function submitRegistration() {
+        const errorDiv = document.getElementById('register-error');
+        const btn = document.getElementById('register-btn');
+
+        const fullName = document.getElementById('admin-name').value.trim();
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-password').value;
+        const passwordConfirm = document.getElementById('admin-password-confirm').value;
+
+        errorDiv.classList.remove('show');
+
+        if (!fullName || !email || !password) {
+            errorDiv.textContent = 'Por favor completa todos los campos obligatorios.';
+            errorDiv.classList.add('show');
+            return;
+        }
+        if (password !== passwordConfirm) {
+            errorDiv.textContent = 'Las contraseñas no coinciden.';
+            errorDiv.classList.add('show');
+            return;
+        }
+        if (password.length < 8) {
+            errorDiv.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+            errorDiv.classList.add('show');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"/></svg> Registrando...`;
+
+        const hostelData = {
+            name:     document.getElementById('hostel-name').value.trim(),
+            city:     document.getElementById('hostel-city').value.trim(),
+            country:  document.getElementById('hostel-country').value,
+            address:  document.getElementById('hostel-address').value.trim(),
+            phone:    document.getElementById('hostel-phone').value.trim(),
+            timezone: document.getElementById('hostel-timezone').value,
+        };
+        const adminData = { fullName, email, password };
+
+        try {
+            // Use the registerHostel function from auth.js
+            // Since auth.js isn't loaded here, we inline the logic:
+            const slug = hostelData.name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '')
+                + '-' + Math.random().toString(36).slice(2, 6);
+
+            const { data: authData, error: authError } = await window.db.auth.signUp({
+                email: adminData.email,
+                password: adminData.password,
+                options: { data: { full_name: adminData.fullName } }
+            });
+            if (authError) throw authError;
+
+            const userId = authData.user.id;
+
+            const { data: hostel, error: hostelError } = await window.db
+                .from('hostels')
+                .insert({
+                    name: hostelData.name,
+                    slug,
+                    email: adminData.email,
+                    phone: hostelData.phone || null,
+                    address: hostelData.address || null,
+                    city: hostelData.city || null,
+                    country: hostelData.country,
+                    timezone: hostelData.timezone,
+                })
+                .select()
+                .single();
+            if (hostelError) throw hostelError;
+
+            const { error: profileError } = await window.db
+                .from('profiles')
+                .insert({
+                    id: userId,
+                    email: adminData.email,
+                    full_name: adminData.fullName,
+                    role: 'admin',
+                    hostel_id: hostel.id
+                });
+            if (profileError) throw profileError;
+
+            showToast('¡Hostel registrado exitosamente! Redirigiendo...', 'success');
+            setTimeout(() => { window.location.href = 'app.html'; }, 2000);
+
+        } catch (err) {
+            console.error('Registration error:', err);
+            let msg = 'Error al registrar. Intenta de nuevo.';
+            if (err.message?.includes('already registered')) msg = 'Este email ya está registrado.';
+            if (err.message?.includes('duplicate key')) msg = 'El nombre de hostel ya existe, elige otro.';
+            errorDiv.textContent = msg;
+            errorDiv.classList.add('show');
+            btn.disabled = false;
+            btn.innerHTML = `Crear cuenta <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:6px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+        }
+    }
+</script>
+</body>
+</html>
