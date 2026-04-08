@@ -330,12 +330,17 @@ async function loadUsers() {
 
     container.innerHTML = users.map(u => {
         const isCurrentUser = u.id === currentUser?.id;
+        const initials = getInitials(u.full_name || u.email);
+        const avatarColor = getAvatarColor(u.full_name || u.email);
         return `
         <div style="background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);">
-                <div style="min-width:0;">
-                    <p style="margin:0;font-weight:600;font-size:0.95rem;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.full_name || u.email)}</p>
-                    <p style="margin:0;font-size:0.78rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.email)}</p>
+                <div style="display:flex;align-items:center;gap:var(--space-3);min-width:0;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;color:#fff;flex-shrink:0;">${initials}</div>
+                    <div style="min-width:0;">
+                        <p style="margin:0;font-weight:600;font-size:0.95rem;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.full_name || u.email)}</p>
+                        <p style="margin:0;font-size:0.78rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.email)}</p>
+                    </div>
                 </div>
                 <span style="flex-shrink:0;padding:2px 10px;border-radius:999px;font-size:0.75rem;font-weight:600;background:${u.role === 'admin' ? 'var(--primary,#6366f1)' : 'var(--gray-200)'};color:${u.role === 'admin' ? '#fff' : 'var(--gray-600)'};">
                     ${u.role === 'admin' ? 'Admin' : 'Voluntario'}
@@ -358,6 +363,20 @@ async function loadUsers() {
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name[0].toUpperCase();
+}
+
+function getAvatarColor(name) {
+    const colors = ['#0d9488','#6366f1','#f97316','#10b981','#3b82f6','#8b5cf6','#ec4899','#f59e0b'];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
 }
 
 async function handleCreateUser(e) {

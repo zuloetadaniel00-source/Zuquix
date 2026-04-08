@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'NR>=135 && NR<=155' \"C:/Users/USUARIO/Desktop/hostel-pms/hostel-os-bocas-main/app.html\")",
+      "Bash(node:*)",
+      "Bash(powershell:*)"
+    ]
+  }
+}

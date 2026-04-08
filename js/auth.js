@@ -122,7 +122,17 @@ function updateUIForRole() {
         roleBadge.className = 'badge badge-' + currentProfile?.role;
     }
 
-    // Mostrar nombre del hostel en el header
+    const userAvatar = document.getElementById('user-avatar');
+    if (userAvatar && currentProfile?.full_name) {
+        userAvatar.textContent = getInitials(currentProfile.full_name);
+        userAvatar.style.background = getAvatarColor(currentProfile.full_name);
+    }
+
+    // Mostrar nombre del hostel en el header y en el banner
+    const hostelBannerName = document.getElementById('hostel-banner-name');
+    if (hostelBannerName && window.currentHostel) {
+        hostelBannerName.textContent = window.currentHostel.name;
+    }
     const hostelNameEl = document.getElementById('hostel-name');
     if (hostelNameEl && window.currentHostel) {
         hostelNameEl.textContent = window.currentHostel.name;
