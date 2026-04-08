@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zuquix PMS — Demo App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --primary-light: #ccfbf1;
+  --accent: #f97316;
+  --red: #ef4444;
+  --green: #10b981;
+  --yellow: #f59e0b;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --bg: #f1f5f9;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --dark: #0c0a09;
+  --dark2: #1c1917;
+  --dark3: #292524;
+  --shadow: 0 1px 3px rgba(0,0,0,.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+  --shadow-lg: 0 10px 24px rgba(0,0,0,.12);
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--gray-700); line-height: 1.5; }
+
+/* ── LAYOUT ── */
+.app-shell { display: flex; height: 100vh; overflow: hidden; background: var(--bg); }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--dark); display: flex; flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.06); transition: width 0.3s;
+}
+.sidebar-header {
+  padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { font-size: 1.25rem; font-weight: 900; color: #14b8a6; letter-spacing: -0.04em; }
+.hostel-badge {
+  font-size: 0.65rem; color: rgba(255,255,255,0.4); font-weight: 600;
+  display: flex; align-items: center; gap: 6px; margin-top: 4px;
+}
+.hostel-badge .live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-section-label {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.25); font-weight: 700; padding: 8px 20px 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+  cursor: pointer; border-radius: 0; transition: background 0.15s; position: relative;
+  font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.55);
+  border: none; background: none; width: 100%; text-align: left; font-family: inherit;
+  min-height: 44px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+.nav-item.active { background: rgba(20,184,166,0.12); color: #14b8a6; border-right: 3px solid #14b8a6; }
+.nav-item.nueva-reserva-btn { background: rgba(20,184,166,0.08); color: #14b8a6; border: 1px solid rgba(20,184,166,0.15); margin: 6px 12px; border-radius: var(--radius); padding: 10px 14px; width: calc(100% - 24px); }
+.nav-item.nueva-reserva-btn:hover { background: rgba(20,184,166,0.15); }
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: white;
+  font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; min-width: 18px; text-align: center;
+}
+.nav-badge.green { background: var(--green); }
+.nav-badge.yellow { background: var(--yellow); }
+
+.sidebar-footer {
+  padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar { width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: white; flex-shrink: 0; }
+.user-name { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.8); }
+.user-role { font-size: 0.65rem; color: rgba(255,255,255,0.35); }
+.user-logout { margin-left: auto; font-size: 0.7rem; color: rgba(255,255,255,0.25); cursor: pointer; background: none; border: none; color: rgba(255,255,255,0.25); }
+.user-logout:hover { color: rgba(255,255,255,0.5); }
+
+/* ── MAIN ── */
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  background: white; border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.topbar-title { font-size: 1rem; font-weight: 800; color: var(--gray-900); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 0.78rem; color: var(--gray-400); }
+.notif-btn {
+  width: 44px; height: 44px; background: var(--gray-100); border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+  font-size: 1rem; border: none; transition: background 0.2s;
+}
+.notif-btn:hover { background: var(--gray-200); }
+.notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid white; }
+.topbar-action {
+  background: var(--primary); color: white; padding: 10px 18px; border-radius: 999px;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer; border: none; font-family: inherit;
+  display: flex; align-items: center; gap: 6px; transition: background 0.2s, transform 0.15s;
+  min-height: 44px;
+}
+.topbar-action:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+/* ── CONTENT ── */
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── DASHBOARD ── */
+.occ-widget {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 60%, #0891b2 100%);
+  border-radius: var(--radius-lg); padding: 24px 28px; margin-bottom: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 8px 28px rgba(13,148,136,0.35); position: relative; overflow: hidden;
+}
+.occ-widget::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.07); }
+.occ-num { font-size: 3rem; font-weight: 900; color: white; letter-spacing: -0.04em; line-height: 1; }
+.occ-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+.occ-bar-wrap { min-width: 160px; }
+.occ-bar-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: rgba(255,255,255,0.7); margin-bottom: 6px; font-weight: 600; }
+.occ-bar-bg { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+.occ-bar-fill { height: 100%; background: white; border-radius: 4px; transition: width 1s ease; }
+.occ-avail { font-size: 0.7rem; color: rgba(255,255,255,0.65); margin-top: 6px; text-align: right; font-weight: 600; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.stat-card { background: white; border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--gray-200); transition: transform 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat-icon { font-size: 1.2rem; margin-bottom: 8px; display: block; }
+.stat-num { font-size: 1.6rem; font-weight: 900; color: var(--gray-900); letter-spacing: -0.03em; }
+.stat-label { font-size: 0.7rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.stat-delta { font-size: 0.72rem; font-weight: 700; margin-top: 6px; }
+.delta-up { color: var(--green); }
+.delta-down { color: var(--red); }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { background: white; border-radius: var(--radius-lg); padding: 20px 22px; border: 1px solid var(--gray-200); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: 0.8rem; font-weight: 800; color: var(--gray-800); text-transform: uppercase; letter-spacing: 0.06em; }
+.card-link { font-size: 0.75rem; color: var(--primary); font-weight: 700; cursor: pointer; }
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.qa-btn { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; font-family: inherit; box-shadow: var(--shadow); min-height: 64px; }
+.qa-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.qa-btn.checkin { background: linear-gradient(135deg, #f0fdf4, white); border: 1px solid #6ee7b7; }
+.qa-btn.checkout { background: linear-gradient(135deg, #fef2f2, white); border: 1px solid #fca5a5; }
+.qa-icon { font-size: 1.5rem; }
+.qa-label { font-size: 0.88rem; font-weight: 700; color: var(--gray-800); }
+.qa-sub { font-size: 0.72rem; color: var(--gray-400); }
+/* Alerts in dashboard */
+.alert-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius); margin-bottom: 8px; }
+.alert-item.warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+.alert-item.info { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.15); }
+.alert-item.success { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); }
+.alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.alert-text { font-size: 0.8rem; font-weight: 600; color: var(--gray-700); }
+.alert-sub { font-size: 0.7rem; color: var(--gray-400); margin-top: 1px; }
+
+/* Guest list */
+.guest-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.guest-item:last-child { border-bottom: none; }
+.g-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: white; }
+.g-name { font-size: 0.875rem; font-weight: 700; color: var(--gray-800); }
+.g-meta { font-size: 0.72rem; color: var(--gray-400); margin-top: 1px; }
+.g-badge { margin-left: auto; font-size: 0.65rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.badge-in { background: rgba(16,185,129,0.12); color: #059669; }
+.badge-out { background: rgba(239,68,68,0.1); color: var(--red); }
+.badge-pend { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+/* Notif panel */
+.notif-panel { position: fixed; top: 56px; right: 28px; width: 360px; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); z-index: 200; display: none; max-height: 480px; overflow-y: auto; }
+.notif-panel.open { display: block; }
+.notif-panel-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); font-size: 0.85rem; font-weight: 800; color: var(--gray-900); display: flex; justify-content: space-between; align-items: center; }
+.notif-clear { font-size: 0.72rem; color: var(--primary); cursor: pointer; font-weight: 700; }
+.notif-item2 { display: flex; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--gray-100); transition: background 0.15s; cursor: pointer; }
+.notif-item2:hover { background: var(--gray-50); }
+.notif-item2:last-child { border-bottom: none; }
+.notif-icon2 { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+.ni-green { background: rgba(16,185,129,0.12); }
+.ni-yellow { background: rgba(245,158,11,0.12); }
+.ni-blue { background: rgba(59,130,246,0.12); }
+.ni-red { background: rgba(239,68,68,0.1); }
+.notif-title2 { font-size: 0.82rem; font-weight: 700; color: var(--gray-800); }
+.notif-body2 { font-size: 0.75rem; color: var(--gray-500); margin-top: 2px; line-height: 1.5; }
+.notif-time2 { font-size: 0.68rem; color: var(--gray-300); margin-top: 4px; }
+.notif-unread { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+
+/* ── RESERVAS VIEW ── */
+.filters-bar { display: flex; gap: 10px; margin-bottom: 18px; align-items: center; flex-wrap: wrap; }
+.filter-btn { padding: 9px 16px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1px solid var(--gray-200); background: white; color: var(--gray-600); cursor: pointer; transition: all 0.2s; font-family: inherit; min-height: 44px; }
+.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.filter-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+.search-box { flex: 1; max-width: 280px; display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--gray-200); border-radius: 999px; padding: 8px 16px; min-height: 44px; }
+.search-box input { border: none; outline: none; font-size: 0.82rem; color: var(--gray-700); width: 100%; font-family: inherit; background: transparent; }
+.reservas-table { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); overflow: hidden; }
+.table-header { display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr 1fr 80px; gap: 10px; padding: 12px 20px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+.table-header span { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); }
+.table-row { display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr 1fr 80px; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--gray-100); align-items: center; transition: background 0.15s; cursor: pointer; }
+.table-row:hover { background: var(--gray-50); }
+.table-row:last-child { border-bottom: none; }
+.tr-guest { display: flex; align-items: center; gap: 10px; }
+.tr-name { font-size: 0.875rem; font-weight: 700; color: var(--gray-800); }
+.tr-email { font-size: 0.7rem; color: var(--gray-400); }
+.tr-text { font-size: 0.82rem; color: var(--gray-600); }
+.status-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.s-confirmed { background: rgba(16,185,129,0.1); color: #059669; }
+.s-checkin { background: rgba(59,130,246,0.1); color: var(--blue); }
+.s-checkout { background: rgba(245,158,11,0.1); color: var(--yellow); }
+.s-pending { background: rgba(239,68,68,0.1); color: var(--red); }
+.row-actions { display: flex; gap: 6px; }
+.row-action-btn { padding: 5px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; border: 1px solid var(--gray-200); background: white; cursor: pointer; font-family: inherit; min-height: 32px; transition: all 0.2s; }
+.row-action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ── NUEVA RESERVA VIEW ── */
+.wizard-container { max-width: 640px; background: white; border-radius: var(--radius-xl); padding: 32px; border: 1px solid var(--gray-200); }
+.wizard-title { font-size: 1.2rem; font-weight: 900; color: var(--gray-900); margin-bottom: 4px; }
+.wizard-sub { font-size: 0.82rem; color: var(--gray-400); margin-bottom: 24px; }
+.step-progress { display: flex; gap: 0; padding: 0 0 24px; align-items: center; }
+.sp-step { flex: 1; text-align: center; }
+.sp-dot { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; border: 2px solid var(--gray-200); color: var(--gray-400); transition: all 0.3s; }
+.sp-step.done .sp-dot { background: var(--green); border-color: var(--green); color: white; }
+.sp-step.active .sp-dot { background: var(--primary); border-color: var(--primary); color: white; }
+.sp-label { font-size: 0.7rem; font-weight: 700; color: var(--gray-400); }
+.sp-step.active .sp-label { color: var(--primary); }
+.sp-step.done .sp-label { color: var(--green); }
+.sp-line { flex: 1; height: 2px; background: var(--gray-200); margin-bottom: 18px; transition: background 0.3s; }
+.sp-line.done { background: var(--green); }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 0.78rem; font-weight: 700; color: var(--gray-700); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 0.875rem; color: var(--gray-800); outline: none; transition: border-color 0.2s; font-family: inherit; min-height: 44px; }
+.form-input:focus { border-color: var(--primary); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-select { width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 0.875rem; color: var(--gray-800); outline: none; transition: border-color 0.2s; font-family: inherit; background: white; cursor: pointer; min-height: 44px; }
+.form-select:focus { border-color: var(--primary); }
+.wizard-footer { display: flex; gap: 10px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--gray-100); margin-top: 16px; }
+.btn-back { padding: 12px 20px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; border: 1.5px solid var(--gray-200); background: white; color: var(--gray-600); cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 44px; }
+.btn-back:hover { border-color: var(--gray-400); }
+.btn-next { padding: 12px 24px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; background: var(--primary); color: white; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 44px; }
+.btn-next:hover { background: var(--primary-dark); }
+.btn-confirm-res { padding: 12px 24px; border-radius: 999px; font-size: 0.85rem; font-weight: 800; background: var(--green); color: white; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.payment-opts { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 6px; }
+.payment-opt { border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 12px 10px; text-align: center; cursor: pointer; transition: all 0.2s; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.payment-opt.selected { border-color: var(--primary); background: var(--primary-light); }
+.payment-opt:hover { border-color: var(--primary); }
+.payment-opt-icon { font-size: 1.2rem; margin-bottom: 4px; display: block; }
+.payment-opt-label { font-size: 0.72rem; font-weight: 700; color: var(--gray-600); }
+.summary-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+.summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--gray-100); }
+.summary-row:last-child { border-bottom: none; font-weight: 800; color: var(--gray-900); }
+.summary-key { font-size: 0.8rem; color: var(--gray-500); }
+.summary-val { font-size: 0.8rem; font-weight: 700; color: var(--gray-800); }
+
+/* ── CAJA VIEW ── */
+.caja-context { background: linear-gradient(135deg, var(--dark2), var(--dark3)); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 16px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.caja-turno { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+.caja-title { font-size: 1.3rem; font-weight: 900; letter-spacing: -0.03em; }
+.caja-sub { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 4px; }
+.caja-total-wrap { text-align: right; }
+.caja-total-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.caja-total { font-size: 2.2rem; font-weight: 900; color: #fbbf24; letter-spacing: -0.04em; }
+.caja-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.close-caja-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 9px 18px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; min-height: 44px; }
+.close-caja-btn:hover { background: rgba(255,255,255,0.18); }
+.open-caja-btn { background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.4); color: #34d399; padding: 9px 18px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; min-height: 44px; }
+.caja-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.caja-breakdown { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); overflow: hidden; }
+.caja-breakdown-header { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); font-size: 0.78rem; font-weight: 800; color: var(--gray-800); text-transform: uppercase; letter-spacing: 0.06em; display: flex; justify-content: space-between; align-items: center; }
+.caja-breakdown-action { font-size: 0.72rem; font-weight: 700; color: var(--primary); cursor: pointer; text-transform: none; letter-spacing: 0; }
+.caja-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--gray-100); }
+.caja-row:last-child { border-bottom: none; }
+.caja-row-label { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; color: var(--gray-600); }
+.caja-row-icon { font-size: 1rem; }
+.caja-row-amount { font-size: 0.9rem; font-weight: 800; color: var(--gray-900); }
+.caja-row-amount.income { color: var(--green); }
+.caja-row-amount.expense { color: var(--red); }
+.caja-row.total { background: var(--gray-50); }
+.caja-row.total .caja-row-label { font-weight: 800; color: var(--gray-900); font-size: 0.9rem; }
+.caja-row.total .caja-row-amount { font-size: 1.1rem; color: var(--primary); }
+.movimiento-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--gray-100); cursor: pointer; transition: background 0.15s; }
+.movimiento-item:hover { background: var(--gray-50); }
+.movimiento-item:last-child { border-bottom: none; }
+.mov-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+.mov-icon.ing { background: rgba(16,185,129,0.1); }
+.mov-icon.eg { background: rgba(239,68,68,0.1); }
+.mov-desc { font-size: 0.83rem; font-weight: 700; color: var(--gray-800); }
+.mov-time { font-size: 0.7rem; color: var(--gray-400); margin-top: 1px; }
+.mov-amount { margin-left: auto; font-size: 0.9rem; font-weight: 800; }
+.mov-amount.ing { color: var(--green); }
+.mov-amount.eg { color: var(--red); }
+.mov-method { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gray-100); color: var(--gray-500); margin-left: 8px; }
+.add-mov-btn { width: 100%; padding: 13px; background: var(--gray-50); border: 1.5px dashed var(--gray-300); border-radius: 10px; font-size: 0.82rem; font-weight: 700; color: var(--primary); cursor: pointer; font-family: inherit; transition: all 0.2s; margin-top: 4px; min-height: 44px; }
+.add-mov-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+
+/* ── TAREAS ── */
+.task-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+.task-filter { padding: 8px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--gray-200); background: white; color: var(--gray-500); cursor: pointer; font-family: inherit; min-height: 44px; }
+.task-filter.active { background: var(--primary); color: white; border-color: var(--primary); }
+.task-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; background: white; border-radius: var(--radius); border: 1px solid var(--gray-200); margin-bottom: 8px; transition: box-shadow 0.15s; }
+.task-item:hover { box-shadow: var(--shadow-md); }
+.task-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--gray-300); flex-shrink: 0; margin-top: 2px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; min-width: 24px; }
+.task-item.done .task-check { background: var(--green); border-color: var(--green); }
+.task-item.done .task-check::after { content: '✓'; }
+.task-item.done .task-title { text-decoration: line-through; color: var(--gray-400); }
+.task-title { font-size: 0.875rem; font-weight: 700; color: var(--gray-800); }
+.task-meta { font-size: 0.72rem; color: var(--gray-400); margin-top: 3px; }
+.task-priority { font-size: 0.65rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; margin-left: auto; flex-shrink: 0; align-self: flex-start; }
+.p-high { background: rgba(239,68,68,0.1); color: var(--red); }
+.p-med { background: rgba(245,158,11,0.1); color: var(--yellow); }
+.p-low { background: rgba(16,185,129,0.1); color: var(--green); }
+.add-task-btn { width: 100%; padding: 13px; background: var(--gray-50); border: 1.5px dashed var(--gray-300); border-radius: 10px; font-size: 0.82rem; font-weight: 700; color: var(--primary); cursor: pointer; font-family: inherit; transition: all 0.2s; margin-top: 8px; min-height: 44px; }
+.add-task-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+
+/* ── EQUIPO VIEW ── */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.team-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); padding: 20px; text-align: center; transition: transform 0.2s; }
+.team-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.team-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 800; color: white; margin: 0 auto 12px; }
+.team-name { font-size: 0.9rem; font-weight: 800; color: var(--gray-900); }
+.team-role { font-size: 0.72rem; color: var(--gray-400); margin-top: 3px; }
+.team-status { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-top: 10px; }
+.ts-active { background: rgba(16,185,129,0.1); color: #059669; }
+.ts-off { background: var(--gray-100); color: var(--gray-400); }
+.team-shift { font-size: 0.72rem; color: var(--gray-500); margin-top: 8px; }
+.team-actions { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.team-action-btn { flex: 1; padding: 7px 10px; border: 1px solid var(--gray-200); background: white; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 36px; }
+.team-action-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ── FINANZAS VIEW ── */
+.finanzas-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.period-selector { display: flex; background: var(--gray-100); border-radius: 999px; padding: 3px; gap: 2px; }
+.period-btn { padding: 7px 16px; border-radius: 999px; border: none; background: transparent; font-size: 0.78rem; font-weight: 700; color: var(--gray-500); cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 36px; }
+.period-btn.active { background: white; color: var(--gray-900); box-shadow: var(--shadow); }
+.export-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: white; border: none; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 44px; }
+.export-btn:hover { background: var(--primary-dark); }
+.fin-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+.fin-stat { background: white; border-radius: var(--radius-lg); padding: 20px 22px; border: 1px solid var(--gray-200); }
+.fin-stat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 8px; }
+.fin-stat-num { font-size: 1.8rem; font-weight: 900; color: var(--gray-900); letter-spacing: -0.03em; }
+.fin-stat-num.income { color: var(--green); }
+.fin-stat-num.expense { color: var(--red); }
+.fin-stat-num.net { color: var(--primary); }
+.fin-stat-sub { font-size: 0.72rem; color: var(--gray-400); margin-top: 4px; }
+.fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.fin-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); padding: 20px 22px; }
+.fin-card-title { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-800); margin-bottom: 16px; }
+/* Bar chart */
+.bar-chart { display: flex; align-items: flex-end; gap: 5px; height: 80px; }
+.bc-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.bc-bar { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #14b8a6, #0d9488); transition: height 0.8s ease; min-height: 2px; }
+.bc-bar.expense { background: linear-gradient(180deg, #f87171, #ef4444); }
+.bc-label { font-size: 0.55rem; font-weight: 700; color: var(--gray-400); white-space: nowrap; }
+.chart-legend { display: flex; gap: 16px; margin-top: 10px; }
+.chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--gray-500); font-weight: 600; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-dot.ing { background: #14b8a6; }
+.legend-dot.eg { background: #ef4444; }
+/* Category breakdown */
+.cat-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.cat-row:last-child { border-bottom: none; }
+.cat-icon { font-size: 1rem; width: 32px; text-align: center; flex-shrink: 0; }
+.cat-name { flex: 1; font-size: 0.82rem; font-weight: 700; color: var(--gray-700); }
+.cat-amount { font-size: 0.9rem; font-weight: 800; color: var(--gray-900); }
+.cat-pct { font-size: 0.7rem; color: var(--gray-400); margin-left: 8px; }
+.cat-bar-bg { height: 4px; background: var(--gray-100); border-radius: 2px; margin-top: 3px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 2px; }
+/* Payment method breakdown */
+.method-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); }
+.method-row:last-child { border-bottom: none; }
+.method-icon { font-size: 1.1rem; flex-shrink: 0; }
+.method-name { flex: 1; font-size: 0.82rem; font-weight: 700; color: var(--gray-700); }
+.method-amount { font-size: 0.88rem; font-weight: 800; color: var(--gray-900); }
+.method-pct { font-size: 0.7rem; color: var(--gray-400); margin-left: 8px; }
+
+/* Daily table */
+.fin-table { width: 100%; border-collapse: collapse; }
+.fin-table th { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); padding: 10px 14px; text-align: left; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+.fin-table td { font-size: 0.82rem; color: var(--gray-700); padding: 12px 14px; border-bottom: 1px solid var(--gray-100); }
+.fin-table tr:hover td { background: var(--gray-50); }
+.fin-table tr:last-child td { border-bottom: none; font-weight: 800; color: var(--gray-900); background: var(--gray-50); }
+.fin-table .td-green { color: var(--green); font-weight: 800; }
+.fin-table .td-red { color: var(--red); font-weight: 800; }
+.fin-table .td-primary { color: var(--primary); font-weight: 800; }
+
+/* ── CANALES OTA ── */
+.ota-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.ota-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); padding: 22px; transition: transform 0.2s; }
+.ota-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.ota-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.ota-logo { font-size: 1.8rem; }
+.ota-status-badge { font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
+.ota-connected { background: rgba(16,185,129,0.1); color: #059669; }
+.ota-disconnected { background: var(--gray-100); color: var(--gray-400); }
+.ota-name { font-size: 0.95rem; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
+.ota-desc { font-size: 0.78rem; color: var(--gray-400); margin-bottom: 14px; }
+.ota-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.ota-stat { background: var(--gray-50); border-radius: 8px; padding: 8px 10px; }
+.ota-stat-num { font-size: 1rem; font-weight: 900; color: var(--gray-900); }
+.ota-stat-label { font-size: 0.62rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.ota-sync-info { font-size: 0.72rem; color: var(--gray-400); margin-bottom: 14px; }
+.ota-action-btn { width: 100%; padding: 11px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 44px; }
+.ota-btn-connected { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+.ota-btn-connected:hover { background: var(--gray-200); }
+.ota-btn-connect { background: var(--primary); color: white; border: none; }
+.ota-btn-connect:hover { background: var(--primary-dark); }
+.ota-import-table { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); overflow: hidden; }
+.ota-import-header { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); font-size: 0.78rem; font-weight: 800; color: var(--gray-800); text-transform: uppercase; letter-spacing: 0.06em; }
+.ota-import-row { display: flex; align-items: center; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--gray-100); }
+.ota-import-row:last-child { border-bottom: none; }
+.ota-import-source { font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+.ota-source-booking { background: rgba(0,109,210,0.1); color: #0056b3; }
+.ota-source-airbnb { background: rgba(255,56,92,0.1); color: #ff385c; }
+
+/* ── REPORTES VIEW ── */
+.report-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.report-card { background: white; border-radius: var(--radius-lg); border: 2px solid var(--gray-200); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.report-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.report-card.selected { border-color: var(--primary); background: var(--primary-light); }
+.report-card-icon { font-size: 1.8rem; margin-bottom: 10px; display: block; }
+.report-card-title { font-size: 0.82rem; font-weight: 800; color: var(--gray-800); }
+.report-card-desc { font-size: 0.7rem; color: var(--gray-400); margin-top: 4px; }
+.report-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.report-date-range { display: flex; gap: 8px; align-items: center; font-size: 0.82rem; color: var(--gray-600); background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 9px 14px; min-height: 44px; }
+.report-date-range input { border: none; outline: none; font-size: 0.82rem; font-family: inherit; }
+.export-pdf-btn { padding: 10px 18px; background: var(--red); color: white; border: none; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 44px; transition: all 0.2s; }
+.export-pdf-btn:hover { opacity: 0.9; }
+.export-excel-btn { padding: 10px 18px; background: var(--green); color: white; border: none; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 44px; transition: all 0.2s; }
+.export-excel-btn:hover { opacity: 0.9; }
+.report-preview { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); overflow: hidden; }
+.report-preview-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center; }
+.report-preview-title { font-size: 0.9rem; font-weight: 800; color: var(--gray-900); }
+.report-preview-sub { font-size: 0.75rem; color: var(--gray-400); }
+.report-occ-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; padding: 20px; }
+.report-occ-card { background: var(--gray-50); border-radius: var(--radius); padding: 14px; text-align: center; }
+.roc-num { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+.roc-label { font-size: 0.7rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* ── SUCCESS TOAST ── */
+.toast { position: fixed; bottom: 80px; right: 28px; background: var(--gray-900); color: white; padding: 14px 20px; border-radius: var(--radius); box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; z-index: 500; transform: translateY(80px); opacity: 0; transition: all 0.3s; max-width: 340px; font-size: 0.85rem; font-weight: 600; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-icon { font-size: 1.2rem; flex-shrink: 0; }
+.toast-close { margin-left: auto; font-size: 1rem; cursor: pointer; opacity: 0.6; background: none; border: none; color: white; }
+
+/* ── BOTTOM NAV (MOBILE) ── */
+.bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+  background: white; border-top: 1px solid var(--gray-200);
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  gap: 0;
+}
+.bnav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 6px 4px; background: none; border: none; cursor: pointer;
+  font-family: inherit; color: var(--gray-400); transition: color 0.2s; position: relative;
+  min-height: 56px;
+}
+.bnav-item.active { color: var(--primary); }
+.bnav-icon { font-size: 1.3rem; }
+.bnav-label { font-size: 0.6rem; font-weight: 700; }
+.bnav-badge { position: absolute; top: 6px; right: calc(50% - 14px); background: var(--red); color: white; font-size: 0.5rem; font-weight: 800; padding: 1px 5px; border-radius: 999px; }
+.bnav-plus {
+  flex: 0 0 64px; background: var(--primary); border-radius: 50%;
+  width: 56px; height: 56px; margin: 0 8px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(13,148,136,0.4);
+  color: white; font-size: 1.5rem; font-weight: 300;
+  flex-direction: row;
+}
+.bnav-plus:hover { background: var(--primary-dark); }
+/* More menu popup */
+.more-menu {
+  position: fixed; bottom: 72px; right: 16px; background: white; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); z-index: 200; min-width: 180px;
+  display: none;
+}
+.more-menu.open { display: block; }
+.more-menu-item {
+  display: flex; align-items: center; gap: 10px; padding: 13px 18px;
+  font-size: 0.85rem; font-weight: 700; color: var(--gray-700); cursor: pointer;
+  border-bottom: 1px solid var(--gray-100); transition: background 0.15s;
+  background: none; border: none; width: 100%; text-align: left; font-family: inherit;
+  border-bottom: 1px solid var(--gray-100); min-height: 48px;
+}
+.more-menu-item:last-child { border-bottom: none; }
+.more-menu-item:hover { background: var(--gray-50); }
+
+/* ── VIEW HEADER ── */
+.view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.view-header-title { font-size: 1.1rem; font-weight: 900; color: var(--gray-900); }
+.view-header-sub { font-size: 0.8rem; color: var(--gray-400); margin-top: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { width: 56px; }
+  .sidebar .nav-item span:not(.nav-icon):not(.nav-badge) { display: none; }
+  .sidebar .logo { display: none; }
+  .sidebar-header { justify-content: center; padding: 16px 8px; }
+  .sidebar-footer .user-name, .sidebar-footer .user-role, .sidebar-footer .user-logout { display: none; }
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .caja-grid { grid-template-columns: 1fr; }
+  .fin-grid { grid-template-columns: 1fr; }
+  .fin-stats { grid-template-columns: 1fr; }
+  .nav-item.nueva-reserva-btn { display: none; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .app-shell { overflow: visible; height: auto; min-height: 100vh; }
+  .main-area { height: 100vh; }
+  .topbar { padding: 0 16px; }
+  .topbar-date { display: none; }
+  .content { padding: 16px; padding-bottom: 80px; }
+  .bottom-nav { display: flex; }
+  .toast { bottom: 80px; right: 12px; left: 12px; max-width: none; }
+  /* Table → cards on mobile */
+  .table-header { display: none; }
+  .table-row { grid-template-columns: 1fr; gap: 4px; padding: 12px 16px; }
+  .table-row > div:nth-child(n+4) { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tr-text { font-size: 0.78rem; }
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .caja-grid { grid-template-columns: 1fr; }
+  .fin-grid { grid-template-columns: 1fr; }
+  .fin-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ota-grid { grid-template-columns: 1fr; }
+  .report-types { grid-template-columns: repeat(2,1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .wizard-container { padding: 20px; }
+  .occ-widget { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .occ-bar-wrap { width: 100%; min-width: unset; }
+  .quick-actions { grid-template-columns: 1fr; }
+  .notif-panel { right: 8px; left: 8px; width: auto; }
+  .caja-total { font-size: 1.8rem; }
+}
+@media (max-width: 480px) {
+  .fin-stats { grid-template-columns: 1fr; }
+  .team-grid { grid-template-columns: repeat(2,1fr); }
+  .report-types { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ══ SIDEBAR ════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div>
+        <div class="logo">Zuquix</div>
+        <div class="hostel-badge">
+          <span class="live-dot"></span>
+          Bocas del Toro
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <button class="nav-item active" onclick="showView('dashboard', this)">
+        <span class="nav-icon">⊞</span><span>Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="showView('reservas', this)">
+        <span class="nav-icon">📅</span><span>Reservas</span>
+        <span class="nav-badge">3</span>
+      </button>
+      <button class="nav-item nueva-reserva-btn" onclick="showView('nueva-reserva', this)">
+        <span class="nav-icon">➕</span><span>Nueva Reserva</span>
+      </button>
+      <button class="nav-item" onclick="showView('caja', this)">
+        <span class="nav-icon">💵</span><span>Caja</span>
+      </button>
+      <button class="nav-item" onclick="showView('tareas', this)">
+        <span class="nav-icon">🧹</span><span>Tareas</span>
+        <span class="nav-badge yellow">2</span>
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px;">Administración</div>
+      <button class="nav-item" onclick="showView('equipo', this)">
+        <span class="nav-icon">👥</span><span>Equipo</span>
+      </button>
+      <button class="nav-item" onclick="showView('finanzas', this)">
+        <span class="nav-icon">📊</span><span>Finanzas</span>
+      </button>
+      <button class="nav-item" onclick="showView('canales-ota', this)">
+        <span class="nav-icon">🔗</span><span>Canales OTA</span>
+        <span class="nav-badge green">ON</span>
+      </button>
+      <button class="nav-item" onclick="showView('reportes', this)">
+        <span class="nav-icon">📁</span><span>Reportes</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">RC</div>
+      <div>
+        <div class="user-name">Rodrigo Castro</div>
+        <div class="user-role">Recepcionista</div>
+      </div>
+      <button class="user-logout" onclick="showToast('Sesión cerrada', '🔐')">⏻</button>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ═══════════════════════════════════════════════ -->
+  <div class="main-area">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="topbar-date">Mar 8 abr 2026 · Turno 8:00 AM - 4:00 PM</div>
+        <button class="notif-btn" onclick="toggleNotif()" title="Notificaciones">
+          🔔<div class="notif-dot" id="notif-dot"></div>
+        </button>
+        <button class="topbar-action" onclick="showView('nueva-reserva', null)">
+          + Nueva Reserva
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification panel -->
+    <div class="notif-panel" id="notif-panel">
+      <div class="notif-panel-header">
+        Notificaciones
+        <span class="notif-clear" onclick="clearNotifs()">Marcar todas como leídas</span>
+      </div>
+      <div class="notif-item2">
+        <div class="notif-icon2 ni-green">✅</div>
+        <div style="flex:1;">
+          <div class="notif-title2">Check-in completado</div>
+          <div class="notif-body2">Sofia Arias — Privada 2, 3 noches. Pago tarjeta $135.</div>
+          <div class="notif-time2">Hace 28 min</div>
+        </div>
+        <div class="notif-unread"></div>
+      </div>
+      <div class="notif-item2">
+        <div class="notif-icon2 ni-yellow">🔔</div>
+        <div style="flex:1;">
+          <div class="notif-title2">Check-out pendiente</div>
+          <div class="notif-body2">Pedro López (Dorm A cama 1) tiene check-out hoy. Aún no ha pasado por recepción.</div>
+          <div class="notif-time2">Hace 1 h</div>
+        </div>
+        <div class="notif-unread"></div>
+      </div>
+      <div class="notif-item2">
+        <div class="notif-icon2 ni-blue">📅</div>
+        <div style="flex:1;">
+          <div class="notif-title2">Nueva reserva — Booking.com</div>
+          <div class="notif-body2">Michael Thompson · 12–15 abr · Dorm C cama 4. $45 total.</div>
+          <div class="notif-time2">Hace 2 h</div>
+        </div>
+        <div class="notif-unread"></div>
+      </div>
+      <div class="notif-item2">
+        <div class="notif-icon2 ni-red">⚠️</div>
+        <div style="flex:1;">
+          <div class="notif-title2">Tarea sin completar</div>
+          <div class="notif-body2">Limpieza Privada 1 asignada a las 10:00 AM aún no está marcada como hecha.</div>
+          <div class="notif-time2">Hace 3 h</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content">
+
+      <!-- ══ DASHBOARD ══════════════════════════════════════ -->
+      <div class="view active" id="view-dashboard">
+        <div class="occ-widget">
+          <div>
+            <div class="occ-num">73%</div>
+            <div class="occ-label">Ocupación de hoy · 22 de 30 camas</div>
+          </div>
+          <div class="occ-bar-wrap">
+            <div class="occ-bar-labels"><span>22/24 camas</span><span>92%</span></div>
+            <div class="occ-bar-bg"><div class="occ-bar-fill" id="dash-occ-bar" style="width:0%"></div></div>
+            <div class="occ-avail">2 camas disponibles</div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-icon">⬇️</span>
+            <div class="stat-num" style="color:#10b981;">8</div>
+            <div class="stat-label">Check-ins hoy</div>
+            <div class="stat-delta delta-up">↑ 3 vs ayer</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⬆️</span>
+            <div class="stat-num" style="color:#ef4444;">5</div>
+            <div class="stat-label">Check-outs hoy</div>
+            <div class="stat-delta" style="color:var(--gray-400);">→ igual que ayer</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">💵</span>
+            <div class="stat-num" style="color:#f59e0b;">$410</div>
+            <div class="stat-label">Caja del turno</div>
+            <div class="stat-delta delta-up">↑ $85 vs ayer</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🧹</span>
+            <div class="stat-num" style="color:#8b5cf6;">3</div>
+            <div class="stat-label">Tareas pendientes</div>
+            <div class="stat-delta delta-down">↑ 1 sin asignar</div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div style="margin-bottom:16px;">
+          <div class="alert-item warn">
+            <span class="alert-icon">⚠️</span>
+            <div>
+              <div class="alert-text">Check-out pendiente · Pedro López (Dorm A cama 1)</div>
+              <div class="alert-sub">Sale hoy antes de las 12:00 PM — aún no ha pasado por recepción</div>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <span class="alert-icon">📅</span>
+            <div>
+              <div class="alert-text">Nueva reserva Booking.com · Michael Thompson</div>
+              <div class="alert-sub">Dorm C cama 4 · Llega el 12 abr · $45</div>
+            </div>
+          </div>
+          <div class="alert-item success">
+            <span class="alert-icon">✅</span>
+            <div>
+              <div class="alert-text">Pago anticipado recibido · Lucía García</div>
+              <div class="alert-sub">$60 por transferencia · Llega el 9 abr · Dorm C cama 5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button class="qa-btn checkin" onclick="showView('nueva-reserva', null)">
+            <div class="qa-icon">✅</div>
+            <div>
+              <div class="qa-label">Nueva Reserva</div>
+              <div class="qa-sub">8 llegadas programadas hoy</div>
+            </div>
+          </button>
+          <button class="qa-btn checkout" onclick="showToast('Flujo de check-out iniciado', '🚪')">
+            <div class="qa-icon">🚪</div>
+            <div>
+              <div class="qa-label">Check-out rápido</div>
+              <div class="qa-sub">5 salidas pendientes hoy</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Dash grid -->
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Huéspedes de hoy</div>
+              <div class="card-link" onclick="showView('reservas', null)">Ver todos →</div>
+            </div>
+            <div class="guest-item">
+              <div class="g-avatar" style="background:#0d9488;">JM</div>
+              <div><div class="g-name">Juan Mora</div><div class="g-meta">Dorm B · cama 3 · 2 noches</div></div>
+              <div class="g-badge badge-in">LLEGA</div>
+            </div>
+            <div class="guest-item">
+              <div class="g-avatar" style="background:#7c3aed;">SA</div>
+              <div><div class="g-name">Sofia Arias</div><div class="g-meta">Privada 2 · 3 noches</div></div>
+              <div class="g-badge badge-in">LLEGA</div>
+            </div>
+            <div class="guest-item">
+              <div class="g-avatar" style="background:#dc2626;">PL</div>
+              <div><div class="g-name">Pedro López</div><div class="g-meta">Dorm A · cama 1 · 4 noches</div></div>
+              <div class="g-badge badge-out">SALE</div>
+            </div>
+            <div class="guest-item">
+              <div class="g-avatar" style="background:#1d4ed8;">KW</div>
+              <div><div class="g-name">Karl Weber</div><div class="g-meta">Privada 1 · 5 noches</div></div>
+              <div class="g-badge badge-pend">IN-HOUSE</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Caja del turno</div>
+              <div class="card-link" onclick="showView('caja', null)">Ver detalle →</div>
+            </div>
+            <div style="background:var(--gray-50);border-radius:10px;overflow:hidden;margin-bottom:12px;">
+              <div class="caja-row">
+                <div class="caja-row-label"><span class="caja-row-icon">💵</span> Efectivo (neto)</div>
+                <div class="caja-row-amount income">$150</div>
+              </div>
+              <div class="caja-row">
+                <div class="caja-row-label"><span class="caja-row-icon">💳</span> Tarjeta</div>
+                <div class="caja-row-amount income">$200</div>
+              </div>
+              <div class="caja-row">
+                <div class="caja-row-label"><span class="caja-row-icon">📲</span> Transferencia</div>
+                <div class="caja-row-amount income">$60</div>
+              </div>
+              <div class="caja-row" style="background:white;border-top:1px solid var(--gray-200);">
+                <div class="caja-row-label" style="font-weight:800;color:var(--gray-900);">Saldo neto</div>
+                <div class="caja-row-amount" style="font-size:1rem;color:var(--primary);">$410</div>
+              </div>
+            </div>
+            <button class="close-caja-btn" style="width:100%;background:var(--gray-900);border:none;" onclick="showToast('Cierre de caja — revisar antes de confirmar', '💵')">
+              Cerrar caja del turno →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ RESERVAS ════════════════════════════════════════ -->
+      <div class="view" id="view-reservas">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Reservas</div>
+            <div class="view-header-sub">8 reservas activas esta semana</div>
+          </div>
+          <button class="topbar-action" onclick="showView('nueva-reserva', null)">+ Nueva Reserva</button>
+        </div>
+        <div class="filters-bar">
+          <button class="filter-btn active" onclick="filterReservas(this, 'all')">Todas (8)</button>
+          <button class="filter-btn" onclick="filterReservas(this, 'today')">Hoy (5)</button>
+          <button class="filter-btn" onclick="filterReservas(this, 'checkin')">Check-in hoy (3)</button>
+          <button class="filter-btn" onclick="filterReservas(this, 'checkout')">Check-out hoy (2)</button>
+          <div class="search-box" style="margin-left:auto;">
+            <span>🔍</span>
+            <input type="text" placeholder="Buscar huésped o habitación..." oninput="searchReservas(this.value)">
+          </div>
+        </div>
+        <div class="reservas-table">
+          <div class="table-header">
+            <span>Huésped</span><span>Habitación</span><span>Check-in</span><span>Check-out</span><span>Total</span><span>Estado</span><span>Acciones</span>
+          </div>
+          <div class="table-row" data-filter="today checkin" onclick="showToast('Reserva de Juan Mora — Dorm B cama 3 · $30', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#0d9488;width:32px;height:32px;font-size:0.6rem;">JM</div>
+              <div><div class="tr-name">Juan Mora</div><div class="tr-email">j.mora@gmail.com</div></div>
+            </div>
+            <div class="tr-text">Dorm B · cama 3</div>
+            <div class="tr-text">8 abr</div>
+            <div class="tr-text">10 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$30</div>
+            <div><span class="status-badge s-checkin">CI hoy</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Check-in Juan Mora iniciado', '✅')">CI</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Reserva de Juan Mora editada', '✏️')">✏️</button>
+            </div>
+          </div>
+          <div class="table-row" data-filter="today checkin" onclick="showToast('Reserva de Sofia Arias — Privada 2 · $135', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#7c3aed;width:32px;height:32px;font-size:0.6rem;">SA</div>
+              <div><div class="tr-name">Sofia Arias</div><div class="tr-email">sofia.arias@outlook.com</div></div>
+            </div>
+            <div class="tr-text">Privada 2</div>
+            <div class="tr-text">8 abr</div>
+            <div class="tr-text">11 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$135</div>
+            <div><span class="status-badge s-checkin">CI hoy</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Check-in Sofia Arias completado', '✅')">CI</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Reserva editada', '✏️')">✏️</button>
+            </div>
+          </div>
+          <div class="table-row" data-filter="today checkout" onclick="showToast('Reserva de Pedro López — sale hoy', '🚪')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#dc2626;width:32px;height:32px;font-size:0.6rem;">PL</div>
+              <div><div class="tr-name">Pedro López</div><div class="tr-email">pedro.l@yahoo.com</div></div>
+            </div>
+            <div class="tr-text">Dorm A · cama 1</div>
+            <div class="tr-text">4 abr</div>
+            <div class="tr-text">8 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$60</div>
+            <div><span class="status-badge s-checkout">Sale hoy</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Check-out Pedro López iniciado', '🚪')">CO</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Ver detalle', '📋')">👁</button>
+            </div>
+          </div>
+          <div class="table-row" data-filter="today" onclick="showToast('Reserva de Grupo Sunrise — 2 camas · $60', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#f59e0b;width:32px;height:32px;font-size:0.6rem;">IR</div>
+              <div><div class="tr-name">Isabel Ruiz + 1</div><div class="tr-email">i.ruiz@gmail.com</div></div>
+            </div>
+            <div class="tr-text">Dorm A · cama 2+3</div>
+            <div class="tr-text">8 abr</div>
+            <div class="tr-text">10 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$60</div>
+            <div><span class="status-badge s-checkin">CI hoy</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Check-in Isabel Ruiz completado', '✅')">CI</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Reserva editada', '✏️')">✏️</button>
+            </div>
+          </div>
+          <div class="table-row" onclick="showToast('Reserva de Karl Weber — In-house', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#1d4ed8;width:32px;height:32px;font-size:0.6rem;">KW</div>
+              <div><div class="tr-name">Karl Weber</div><div class="tr-email">k.weber@gmail.de</div></div>
+            </div>
+            <div class="tr-text">Privada 1</div>
+            <div class="tr-text">7 abr</div>
+            <div class="tr-text">12 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$225</div>
+            <div><span class="status-badge s-confirmed">In-house</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Karl Weber — en casa hasta 12 abr', '🏠')">👁</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Cobro extra agregado', '💵')">+$</button>
+            </div>
+          </div>
+          <div class="table-row" onclick="showToast('Reserva de Lucía García — confirmada', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#059669;width:32px;height:32px;font-size:0.6rem;">LG</div>
+              <div><div class="tr-name">Lucía García</div><div class="tr-email">lucia.g@hotmail.com</div></div>
+            </div>
+            <div class="tr-text">Dorm C · cama 5</div>
+            <div class="tr-text">9 abr</div>
+            <div class="tr-text">13 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$60</div>
+            <div><span class="status-badge s-confirmed">Confirmada</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Pago anticipado $60 recibido', '✅')">👁</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Reserva editada', '✏️')">✏️</button>
+            </div>
+          </div>
+          <div class="table-row" onclick="showToast('Reserva de Michael Thompson — Booking.com', '📋')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#b45309;width:32px;height:32px;font-size:0.6rem;">MT</div>
+              <div><div class="tr-name">Michael Thompson</div><div class="tr-email">m.thompson@proton.me</div></div>
+            </div>
+            <div class="tr-text">Dorm C · cama 4</div>
+            <div class="tr-text">12 abr</div>
+            <div class="tr-text">15 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--green);">$45</div>
+            <div><span class="status-badge" style="background:rgba(0,109,210,0.1);color:#0056b3;">Booking.com</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Importado de Booking.com', '🔗')">👁</button>
+            </div>
+          </div>
+          <div class="table-row" onclick="showToast('Reserva de Amara Rodríguez — pago pendiente', '⚠️')">
+            <div class="tr-guest">
+              <div class="g-avatar" style="background:#be185d;width:32px;height:32px;font-size:0.6rem;">AR</div>
+              <div><div class="tr-name">Amara Rodríguez</div><div class="tr-email">amara.r@gmail.com</div></div>
+            </div>
+            <div class="tr-text">Privada 2</div>
+            <div class="tr-text">14 abr</div>
+            <div class="tr-text">17 abr</div>
+            <div class="tr-text" style="font-weight:700;color:var(--yellow);">$135 ⚠️</div>
+            <div><span class="status-badge s-pending">Pago pend.</span></div>
+            <div class="row-actions">
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Recordatorio enviado a Amara', '📨')">📨</button>
+              <button class="row-action-btn" onclick="event.stopPropagation();showToast('Reserva cancelada', '❌')">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ NUEVA RESERVA (inline wizard) ═══════════════════ -->
+      <div class="view" id="view-nueva-reserva">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Nueva Reserva</div>
+            <div class="view-header-sub">Completa los 3 pasos para registrar la reserva</div>
+          </div>
+          <button class="topbar-action" style="background:var(--gray-200);color:var(--gray-700);" onclick="showView('reservas', null)">← Ver Reservas</button>
+        </div>
+        <div class="wizard-container">
+          <div class="step-progress" id="wizard-steps">
+            <div class="sp-step active" id="wsp1"><div class="sp-dot">1</div><div class="sp-label">Alojamiento</div></div>
+            <div class="sp-line" id="wline1"></div>
+            <div class="sp-step" id="wsp2"><div class="sp-dot">2</div><div class="sp-label">Huésped + Pago</div></div>
+            <div class="sp-line" id="wline2"></div>
+            <div class="sp-step" id="wsp3"><div class="sp-dot">3</div><div class="sp-label">Confirmar</div></div>
+          </div>
+          <div id="wstep-sub" style="font-size:0.8rem;color:var(--gray-400);margin-bottom:20px;">Paso 1 de 3 — Habitación y fechas</div>
+
+          <!-- Paso 1 -->
+          <div id="wstep-1">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Tipo de alojamiento</label>
+                <select class="form-select" id="w-room-type" onchange="updateWRoomOptions()">
+                  <option value="">Seleccionar tipo...</option>
+                  <option value="dorm">Cama en dorm ($15/noche)</option>
+                  <option value="privada">Habitación privada ($45/noche)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Habitación / Cama</label>
+                <select class="form-select" id="w-room-select">
+                  <option value="">Primero selecciona tipo</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Fecha de llegada</label>
+                <input type="date" class="form-input" id="w-ci-date" value="2026-04-08">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha de salida</label>
+                <input type="date" class="form-input" id="w-co-date" value="2026-04-10">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Número de huéspedes</label>
+              <select class="form-select">
+                <option>1 huésped</option><option>2 huéspedes</option><option>3 huéspedes</option>
+              </select>
+            </div>
+            <div id="w-price-preview" style="display:none;background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:12px 16px;font-size:0.875rem;font-weight:700;color:var(--primary-dark);margin-top:4px;"></div>
+          </div>
+
+          <!-- Paso 2 -->
+          <div id="wstep-2" style="display:none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" placeholder="Ej: María" id="w-guest-name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Apellido</label>
+                <input type="text" class="form-input" placeholder="Ej: García" id="w-guest-last">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" placeholder="email@ejemplo.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Teléfono (opcional)</label>
+                <input type="tel" class="form-input" placeholder="+507 6000-0000">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nacionalidad</label>
+              <select class="form-select">
+                <option>🇵🇦 Panamá</option><option>🇨🇴 Colombia</option><option>🇨🇷 Costa Rica</option>
+                <option>🇲🇽 México</option><option>🇺🇸 Estados Unidos</option><option>🇩🇪 Alemania</option>
+                <option>🇫🇷 Francia</option><option>Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Método de pago</label>
+              <div class="payment-opts">
+                <div class="payment-opt" onclick="selectWPayment(this)">
+                  <span class="payment-opt-icon">💵</span><div class="payment-opt-label">Efectivo</div>
+                </div>
+                <div class="payment-opt selected" onclick="selectWPayment(this)">
+                  <span class="payment-opt-icon">💳</span><div class="payment-opt-label">Tarjeta</div>
+                </div>
+                <div class="payment-opt" onclick="selectWPayment(this)">
+                  <span class="payment-opt-icon">📲</span><div class="payment-opt-label">Transferencia</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paso 3 -->
+          <div id="wstep-3" style="display:none;">
+            <div class="summary-box">
+              <div class="summary-row"><span class="summary-key">Habitación</span><span class="summary-val" id="wsum-room">—</span></div>
+              <div class="summary-row"><span class="summary-key">Llegada</span><span class="summary-val" id="wsum-ci">8 abr 2026</span></div>
+              <div class="summary-row"><span class="summary-key">Salida</span><span class="summary-val" id="wsum-co">10 abr 2026</span></div>
+              <div class="summary-row"><span class="summary-key">Noches</span><span class="summary-val" id="wsum-nights">2 noches</span></div>
+              <div class="summary-row"><span class="summary-key">Huésped</span><span class="summary-val" id="wsum-guest">—</span></div>
+              <div class="summary-row"><span class="summary-key">Método de pago</span><span class="summary-val" id="wsum-payment">Tarjeta</span></div>
+              <div class="summary-row">
+                <span class="summary-key" style="font-weight:800;color:var(--gray-900);">Total a cobrar</span>
+                <span class="summary-val" style="font-size:1.1rem;color:var(--primary);" id="wsum-total">$30.00</span>
+              </div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #6ee7b7;border-radius:10px;padding:12px 14px;font-size:0.82rem;color:#065f46;">
+              ✅ Al confirmar, la reserva quedará registrada y el pago será registrado en la caja del turno.
+            </div>
+          </div>
+
+          <div class="wizard-footer">
+            <button class="btn-back" id="w-btn-back" style="display:none;" onclick="wStepBack()">← Anterior</button>
+            <button class="btn-next" id="w-btn-next" onclick="wStepNext()">Siguiente →</button>
+            <button class="btn-confirm-res" id="w-btn-confirm" style="display:none;" onclick="wConfirm()">✓ Confirmar Reserva</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CAJA ════════════════════════════════════════════ -->
+      <div class="view" id="view-caja">
+        <div class="caja-context">
+          <div>
+            <div class="caja-turno">Turno mañana · Bocas del Toro · 8 abr 2026</div>
+            <div class="caja-title">Caja en vivo</div>
+            <div class="caja-sub">Abierta desde las 06:00 AM · Recepcionista: Rodrigo Castro</div>
+            <div class="caja-actions">
+              <button class="close-caja-btn" onclick="showToast('Cierre de caja — confirmar con tu supervisor', '💵')">
+                Cerrar caja del turno →
+              </button>
+              <button class="open-caja-btn" onclick="showToast('Apertura de caja registrada con fondo $200', '💰')">
+                + Apertura de caja
+              </button>
+            </div>
+          </div>
+          <div class="caja-total-wrap">
+            <div class="caja-total-label">Saldo neto del turno</div>
+            <div class="caja-total">$410</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">$150 ef · $200 tarj · $60 transf</div>
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-top:2px;">Ingresos $470 − Egresos $60</div>
+          </div>
+        </div>
+
+        <div class="caja-grid">
+          <div class="caja-breakdown">
+            <div class="caja-breakdown-header">
+              Resumen del turno
+              <span class="caja-breakdown-action" onclick="showToast('Descargando resumen del turno...', '📄')">Exportar</span>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label"><span class="caja-row-icon">📥</span> Total ingresos</div>
+              <div class="caja-row-amount income">+ $470</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label" style="padding-left:20px;"><span class="caja-row-icon">💵</span> Efectivo recibido</div>
+              <div class="caja-row-amount" style="font-size:0.82rem;color:var(--gray-500);">$210</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label" style="padding-left:20px;"><span class="caja-row-icon">💳</span> Tarjeta</div>
+              <div class="caja-row-amount" style="font-size:0.82rem;color:var(--gray-500);">$200</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label" style="padding-left:20px;"><span class="caja-row-icon">📲</span> Transferencia</div>
+              <div class="caja-row-amount" style="font-size:0.82rem;color:var(--gray-500);">$60</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label"><span class="caja-row-icon">📤</span> Total egresos</div>
+              <div class="caja-row-amount expense">− $60</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label" style="padding-left:20px;"><span class="caja-row-icon">🛒</span> Suministros</div>
+              <div class="caja-row-amount" style="font-size:0.82rem;color:var(--gray-500);">$25</div>
+            </div>
+            <div class="caja-row">
+              <div class="caja-row-label" style="padding-left:20px;"><span class="caja-row-icon">🚗</span> Transporte</div>
+              <div class="caja-row-amount" style="font-size:0.82rem;color:var(--gray-500);">$35</div>
+            </div>
+            <div class="caja-row total">
+              <div class="caja-row-label">Saldo neto del turno</div>
+              <div class="caja-row-amount" style="font-size:1.2rem;color:var(--primary);">$410</div>
+            </div>
+          </div>
+
+          <div class="caja-breakdown">
+            <div class="caja-breakdown-header">
+              Movimientos del turno
+              <span class="caja-breakdown-action" onclick="showToast('+ Agregar movimiento manual', '💵')">+ Nuevo</span>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💵</div>
+              <div><div class="mov-desc">Check-in Grupo Sunrise (Dorm A ×2)</div><div class="mov-time">07:15 AM</div></div>
+              <div><div class="mov-amount ing">+ $60</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">📲</div>
+              <div><div class="mov-desc">Pago anticipado — Lucía García</div><div class="mov-time">07:40 AM</div></div>
+              <div><div class="mov-amount ing">+ $60</div><span class="mov-method">Transf.</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💵</div>
+              <div><div class="mov-desc">Check-in Juan Mora — Dorm B</div><div class="mov-time">08:15 AM</div></div>
+              <div><div class="mov-amount ing">+ $30</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💳</div>
+              <div><div class="mov-desc">Noche extra — Karl Weber</div><div class="mov-time">08:50 AM</div></div>
+              <div><div class="mov-amount ing">+ $45</div><span class="mov-method">Tarjeta</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon eg">🛒</div>
+              <div><div class="mov-desc">Suministros limpieza</div><div class="mov-time">09:05 AM</div></div>
+              <div><div class="mov-amount eg">− $25</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💳</div>
+              <div><div class="mov-desc">Check-in Sofia Arias — Privada 2</div><div class="mov-time">09:32 AM</div></div>
+              <div><div class="mov-amount ing">+ $135</div><span class="mov-method">Tarjeta</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💵</div>
+              <div><div class="mov-desc">Tour excursión ×3 pax</div><div class="mov-time">10:20 AM</div></div>
+              <div><div class="mov-amount ing">+ $90</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💵</div>
+              <div><div class="mov-desc">Servicio lavandería ×2</div><div class="mov-time">10:45 AM</div></div>
+              <div><div class="mov-amount ing">+ $30</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon eg">🚗</div>
+              <div><div class="mov-desc">Transporte proveedor</div><div class="mov-time">11:15 AM</div></div>
+              <div><div class="mov-amount eg">− $35</div><span class="mov-method">Efectivo</span></div>
+            </div>
+            <div class="movimiento-item">
+              <div class="mov-icon ing">💳</div>
+              <div><div class="mov-desc">Bar / Café consumo</div><div class="mov-time">11:45 AM</div></div>
+              <div><div class="mov-amount ing">+ $20</div><span class="mov-method">Tarjeta</span></div>
+            </div>
+            <button class="add-mov-btn" onclick="showToast('Agregar movimiento manual — efectivo/tarjeta/transf', '💵')">
+              + Agregar movimiento manual
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ TAREAS ══════════════════════════════════════════ -->
+      <div class="view" id="view-tareas">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Tareas & Housekeeping</div>
+            <div class="view-header-sub">3 pendientes · 2 completadas</div>
+          </div>
+          <button class="topbar-action" onclick="showToast('Nueva tarea agregada al tablero', '🧹')">+ Nueva tarea</button>
+        </div>
+        <div class="task-filters">
+          <button class="task-filter active" onclick="filterTasks(this,'all')">Todas (5)</button>
+          <button class="task-filter" onclick="filterTasks(this,'pending')">Pendientes (3)</button>
+          <button class="task-filter" onclick="filterTasks(this,'done')">Completadas (2)</button>
+          <button class="task-filter" onclick="filterTasks(this,'urgent')">Urgentes (1)</button>
+        </div>
+        <div class="task-item" id="task1">
+          <div class="task-check" onclick="toggleTask('task1')"></div>
+          <div style="flex:1;">
+            <div class="task-title">Limpieza Privada 1 — cambio de sábanas completo</div>
+            <div class="task-meta">Asignado a: María V. · Programado: 10:00 AM · Privada 1</div>
+          </div>
+          <div class="task-priority p-high">Urgente</div>
+        </div>
+        <div class="task-item" id="task2">
+          <div class="task-check" onclick="toggleTask('task2')"></div>
+          <div style="flex:1;">
+            <div class="task-title">Reponer amenities baño compartido piso 2</div>
+            <div class="task-meta">Asignado a: Sin asignar · Recordatorio: 11:00 AM</div>
+          </div>
+          <div class="task-priority p-med">Medio</div>
+        </div>
+        <div class="task-item" id="task3">
+          <div class="task-check" onclick="toggleTask('task3')"></div>
+          <div style="flex:1;">
+            <div class="task-title">Revisar filtro de piscina y niveles de cloro</div>
+            <div class="task-meta">Asignado a: Carlos M. · Programado: 14:00 PM · Área exterior</div>
+          </div>
+          <div class="task-priority p-med">Medio</div>
+        </div>
+        <div class="task-item done" id="task4">
+          <div class="task-check" onclick="toggleTask('task4')"></div>
+          <div style="flex:1;">
+            <div class="task-title">Limpieza Dorm A — check-out Pedro López</div>
+            <div class="task-meta">Completado a las 09:15 AM · María V.</div>
+          </div>
+          <div class="task-priority p-low">Hecho</div>
+        </div>
+        <div class="task-item done" id="task5">
+          <div class="task-check" onclick="toggleTask('task5')"></div>
+          <div style="flex:1;">
+            <div class="task-title">Desayuno preparado — área comedor</div>
+            <div class="task-meta">Completado a las 07:30 AM · Rodrigo C.</div>
+          </div>
+          <div class="task-priority p-low">Hecho</div>
+        </div>
+        <button class="add-task-btn" onclick="showToast('Nueva tarea agregada', '🧹')">
+          + Agregar tarea
+        </button>
+      </div>
+
+      <!-- ══ EQUIPO ══════════════════════════════════════════ -->
+      <div class="view" id="view-equipo">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Gestión de Equipo</div>
+            <div class="view-header-sub">3 en turno · 2 días libres · 5 total</div>
+          </div>
+          <button class="topbar-action" onclick="showToast('Invitación enviada al nuevo miembro', '👥')">+ Invitar miembro</button>
+        </div>
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-avatar" style="background:#0d9488;">RC</div>
+            <div class="team-name">Rodrigo Castro</div>
+            <div class="team-role">Recepcionista</div>
+            <div class="team-status ts-active"><span style="width:6px;height:6px;background:#10b981;border-radius:50%;"></span> En turno</div>
+            <div class="team-shift">Turno mañana · 06:00 — 14:00</div>
+            <div class="team-actions">
+              <button class="team-action-btn" onclick="showToast('Editar perfil de Rodrigo Castro', '✏️')">Editar</button>
+              <button class="team-action-btn" onclick="showToast('Ver actividad de Rodrigo Castro', '📊')">Ver</button>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#7c3aed;">MV</div>
+            <div class="team-name">María Vásquez</div>
+            <div class="team-role">Housekeeping</div>
+            <div class="team-status ts-active"><span style="width:6px;height:6px;background:#10b981;border-radius:50%;"></span> En turno</div>
+            <div class="team-shift">Turno mañana · 08:00 — 16:00</div>
+            <div class="team-actions">
+              <button class="team-action-btn" onclick="showToast('Editar perfil de María Vásquez', '✏️')">Editar</button>
+              <button class="team-action-btn" onclick="showToast('Ver tareas asignadas a María', '📋')">Tareas</button>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#d97706;">CM</div>
+            <div class="team-name">Carlos Mora</div>
+            <div class="team-role">Mantenimiento</div>
+            <div class="team-status ts-active"><span style="width:6px;height:6px;background:#10b981;border-radius:50%;"></span> En turno</div>
+            <div class="team-shift">Turno mañana · 07:00 — 15:00</div>
+            <div class="team-actions">
+              <button class="team-action-btn" onclick="showToast('Editar perfil de Carlos Mora', '✏️')">Editar</button>
+              <button class="team-action-btn" onclick="showToast('Ver actividad de Carlos Mora', '📊')">Ver</button>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#dc2626;">LP</div>
+            <div class="team-name">Laura Pérez</div>
+            <div class="team-role">Recepcionista</div>
+            <div class="team-status ts-off">⏸ Día libre</div>
+            <div class="team-shift">Turno tarde mañana 9 abr</div>
+            <div class="team-actions">
+              <button class="team-action-btn" onclick="showToast('Editar perfil de Laura Pérez', '✏️')">Editar</button>
+              <button class="team-action-btn" onclick="showToast('Laura activada en el turno', '✅')">Activar</button>
+            </div>
+          </div>
+          <div class="team-card">
+            <div class="team-avatar" style="background:#1d4ed8;">DG</div>
+            <div class="team-name">Daniel García</div>
+            <div class="team-role">Admin / Dueño</div>
+            <div class="team-status ts-off">📱 Remoto</div>
+            <div class="team-shift">Solo lectura · En línea</div>
+            <div class="team-actions">
+              <button class="team-action-btn" onclick="showToast('Editando permisos de Daniel García', '🔐')">Permisos</button>
+              <button class="team-action-btn" onclick="showToast('Ver actividad del dueño', '📊')">Ver</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ FINANZAS ════════════════════════════════════════ -->
+      <div class="view" id="view-finanzas">
+        <div class="finanzas-header">
+          <div>
+            <div class="view-header-title">Finanzas</div>
+            <div class="view-header-sub">Semana 1–8 abr 2026</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div class="period-selector">
+              <button class="period-btn active" onclick="filterFinanzas(this,'semana')">Semana</button>
+              <button class="period-btn" onclick="filterFinanzas(this,'mes')">Mes</button>
+              <button class="period-btn" onclick="filterFinanzas(this,'custom')">Personalizado</button>
+            </div>
+            <button class="export-btn" onclick="showToast('Exportando a Excel...', '📊')">
+              📊 Exportar Excel
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="fin-stats">
+          <div class="fin-stat">
+            <div class="fin-stat-label">Total Ingresos</div>
+            <div class="fin-stat-num income">$2,965</div>
+            <div class="fin-stat-sub">↑ 12% vs semana anterior</div>
+          </div>
+          <div class="fin-stat">
+            <div class="fin-stat-label">Total Egresos</div>
+            <div class="fin-stat-num expense">$505</div>
+            <div class="fin-stat-sub">↓ 3% vs semana anterior</div>
+          </div>
+          <div class="fin-stat">
+            <div class="fin-stat-label">Saldo Neto</div>
+            <div class="fin-stat-num net">$2,460</div>
+            <div class="fin-stat-sub">= Ingresos − Egresos ✓</div>
+          </div>
+        </div>
+
+        <div class="fin-grid">
+          <!-- Daily bar chart -->
+          <div class="fin-card">
+            <div class="fin-card-title">Ingresos diarios (abr 1–8)</div>
+            <div class="bar-chart" id="daily-chart">
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:66%"></div><div class="bc-label">1</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:59%"></div><div class="bc-label">2</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:70%"></div><div class="bc-label">3</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:74%"></div><div class="bc-label">4</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:61%"></div><div class="bc-label">5</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:85%"></div><div class="bc-label">6</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:100%"></div><div class="bc-label">7</div></div>
+              <div class="bc-bar-wrap"><div class="bc-bar" style="height:97%"></div><div class="bc-label">8</div></div>
+            </div>
+            <div class="chart-legend">
+              <div class="chart-legend-item"><div class="legend-dot ing"></div>Ingresos por día</div>
+            </div>
+          </div>
+
+          <!-- Category breakdown (income) -->
+          <div class="fin-card">
+            <div class="fin-card-title">Ingresos por categoría</div>
+            <div class="cat-row">
+              <div class="cat-icon">🛏️</div>
+              <div>
+                <div class="cat-name">Alojamiento</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:73%;background:#14b8a6;"></div></div>
+              </div>
+              <div><div class="cat-amount">$2,155</div><span class="cat-pct">73%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">🏄</div>
+              <div>
+                <div class="cat-name">Tours / Actividades</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:15%;background:#3b82f6;"></div></div>
+              </div>
+              <div><div class="cat-amount">$450</div><span class="cat-pct">15%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">👕</div>
+              <div>
+                <div class="cat-name">Lavandería</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:6%;background:#8b5cf6;"></div></div>
+              </div>
+              <div><div class="cat-amount">$180</div><span class="cat-pct">6%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">☕</div>
+              <div>
+                <div class="cat-name">Bar / Café</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:6%;background:#f59e0b;"></div></div>
+              </div>
+              <div><div class="cat-amount">$180</div><span class="cat-pct">6%</span></div>
+            </div>
+            <div class="cat-row" style="border-top:2px solid var(--gray-200);margin-top:4px;">
+              <div class="cat-icon">📊</div>
+              <div><div class="cat-name" style="font-weight:900;color:var(--gray-900);">Total ingresos</div></div>
+              <div><div class="cat-amount" style="color:var(--green);">$2,965</div></div>
+            </div>
+          </div>
+
+          <!-- Category breakdown (expenses) -->
+          <div class="fin-card">
+            <div class="fin-card-title">Egresos por categoría</div>
+            <div class="cat-row">
+              <div class="cat-icon">🧹</div>
+              <div>
+                <div class="cat-name">Suministros / Limpieza</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:35%;background:#ef4444;"></div></div>
+              </div>
+              <div><div class="cat-amount">$175</div><span class="cat-pct">35%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">🚗</div>
+              <div>
+                <div class="cat-name">Transporte</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:21%;background:#f97316;"></div></div>
+              </div>
+              <div><div class="cat-amount">$105</div><span class="cat-pct">21%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">💡</div>
+              <div>
+                <div class="cat-name">Servicios (agua/luz/internet)</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:24%;background:#f59e0b;"></div></div>
+              </div>
+              <div><div class="cat-amount">$120</div><span class="cat-pct">24%</span></div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-icon">🔗</div>
+              <div>
+                <div class="cat-name">Comisiones OTA</div>
+                <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:21%;background:#8b5cf6;"></div></div>
+              </div>
+              <div><div class="cat-amount">$105</div><span class="cat-pct">21%</span></div>
+            </div>
+            <div class="cat-row" style="border-top:2px solid var(--gray-200);margin-top:4px;">
+              <div class="cat-icon">📊</div>
+              <div><div class="cat-name" style="font-weight:900;color:var(--gray-900);">Total egresos</div></div>
+              <div><div class="cat-amount" style="color:var(--red);">$505</div></div>
+            </div>
+          </div>
+
+          <!-- Payment method breakdown -->
+          <div class="fin-card">
+            <div class="fin-card-title">Ingresos por método de pago</div>
+            <div class="method-row">
+              <div class="method-icon">💵</div>
+              <div>
+                <div class="method-name">Efectivo</div>
+                <div class="cat-bar-bg" style="margin-top:4px;"><div class="cat-bar-fill" style="width:40%;background:#14b8a6;"></div></div>
+              </div>
+              <div><div class="method-amount">$1,185</div><span class="method-pct">40%</span></div>
+            </div>
+            <div class="method-row">
+              <div class="method-icon">💳</div>
+              <div>
+                <div class="method-name">Tarjeta</div>
+                <div class="cat-bar-bg" style="margin-top:4px;"><div class="cat-bar-fill" style="width:35%;background:#3b82f6;"></div></div>
+              </div>
+              <div><div class="method-amount">$1,040</div><span class="method-pct">35%</span></div>
+            </div>
+            <div class="method-row">
+              <div class="method-icon">📲</div>
+              <div>
+                <div class="method-name">Transferencia / Digital</div>
+                <div class="cat-bar-bg" style="margin-top:4px;"><div class="cat-bar-fill" style="width:15%;background:#8b5cf6;"></div></div>
+              </div>
+              <div><div class="method-amount">$445</div><span class="method-pct">15%</span></div>
+            </div>
+            <div class="method-row">
+              <div class="method-icon">🌐</div>
+              <div>
+                <div class="method-name">OTA / Online</div>
+                <div class="cat-bar-bg" style="margin-top:4px;"><div class="cat-bar-fill" style="width:10%;background:#f59e0b;"></div></div>
+              </div>
+              <div><div class="method-amount">$295</div><span class="method-pct">10%</span></div>
+            </div>
+            <div class="method-row" style="border-top:2px solid var(--gray-200);margin-top:4px;">
+              <div class="method-icon">✅</div>
+              <div><div class="method-name" style="font-weight:900;color:var(--gray-900);">Total verificado</div></div>
+              <div><div class="method-amount" style="color:var(--primary);">$2,965</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily detail table -->
+        <div class="fin-card" style="margin-top:0;">
+          <div class="fin-card-title" style="margin-bottom:12px;">Detalle diario — Semana 1–8 abr 2026</div>
+          <div style="overflow-x:auto;">
+            <table class="fin-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Día</th><th>Ingresos</th><th>Egresos</th><th>Saldo del día</th><th>Acum. semana</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1 abr</td><td>Miércoles</td><td class="td-green">$320</td><td class="td-red">$45</td><td class="td-primary">$275</td><td>$275</td></tr>
+                <tr><td>2 abr</td><td>Jueves</td><td class="td-green">$285</td><td class="td-red">$60</td><td class="td-primary">$225</td><td>$500</td></tr>
+                <tr><td>3 abr</td><td>Viernes</td><td class="td-green">$340</td><td class="td-red">$85</td><td class="td-primary">$255</td><td>$755</td></tr>
+                <tr><td>4 abr</td><td>Sábado</td><td class="td-green">$360</td><td class="td-red">$50</td><td class="td-primary">$310</td><td>$1,065</td></tr>
+                <tr><td>5 abr</td><td>Domingo</td><td class="td-green">$295</td><td class="td-red">$40</td><td class="td-primary">$255</td><td>$1,320</td></tr>
+                <tr><td>6 abr</td><td>Lunes</td><td class="td-green">$410</td><td class="td-red">$75</td><td class="td-primary">$335</td><td>$1,655</td></tr>
+                <tr><td>7 abr</td><td>Martes</td><td class="td-green">$485</td><td class="td-red">$90</td><td class="td-primary">$395</td><td>$2,050</td></tr>
+                <tr><td>8 abr</td><td>Miércoles</td><td class="td-green">$470</td><td class="td-red">$60</td><td class="td-primary">$410</td><td>$2,460</td></tr>
+                <tr style="font-weight:900;">
+                  <td colspan="2"><strong>TOTAL SEMANA</strong></td>
+                  <td class="td-green"><strong>$2,965</strong></td>
+                  <td class="td-red"><strong>$505</strong></td>
+                  <td class="td-primary"><strong>$2,460</strong></td>
+                  <td class="td-primary"><strong>$2,460</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CANALES OTA ═════════════════════════════════════ -->
+      <div class="view" id="view-canales-ota">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Canales OTA</div>
+            <div class="view-header-sub">2 canales conectados · Última sincronización hace 28 min</div>
+          </div>
+          <button class="topbar-action" onclick="showToast('Sincronizando todos los canales...', '🔄')">🔄 Sync ahora</button>
+        </div>
+
+        <div class="ota-grid">
+          <!-- Booking.com -->
+          <div class="ota-card">
+            <div class="ota-card-header">
+              <div class="ota-logo">🏨</div>
+              <span class="ota-status-badge ota-connected">● Conectado</span>
+            </div>
+            <div class="ota-name">Booking.com</div>
+            <div class="ota-desc">Canal principal · Sincronización bidireccional en tiempo real</div>
+            <div class="ota-stats">
+              <div class="ota-stat"><div class="ota-stat-num">3</div><div class="ota-stat-label">Reservas este mes</div></div>
+              <div class="ota-stat"><div class="ota-stat-num">$150</div><div class="ota-stat-label">Ingresos OTA</div></div>
+            </div>
+            <div class="ota-sync-info">🔄 Última sync: hoy 11:30 AM · Próxima: automática</div>
+            <button class="ota-action-btn ota-btn-connected" onclick="showToast('Configuración de Booking.com abierta', '⚙️')">
+              ⚙️ Configurar canal
+            </button>
+          </div>
+
+          <!-- Airbnb -->
+          <div class="ota-card">
+            <div class="ota-card-header">
+              <div class="ota-logo">🏠</div>
+              <span class="ota-status-badge ota-connected">● Conectado</span>
+            </div>
+            <div class="ota-name">Airbnb</div>
+            <div class="ota-desc">Habitaciones privadas · Solo privadas habilitadas</div>
+            <div class="ota-stats">
+              <div class="ota-stat"><div class="ota-stat-num">1</div><div class="ota-stat-label">Reservas este mes</div></div>
+              <div class="ota-stat"><div class="ota-stat-num">$135</div><div class="ota-stat-label">Ingresos OTA</div></div>
+            </div>
+            <div class="ota-sync-info">🔄 Última sync: hoy 09:15 AM · Automática cada hora</div>
+            <button class="ota-action-btn ota-btn-connected" onclick="showToast('Configuración de Airbnb abierta', '⚙️')">
+              ⚙️ Configurar canal
+            </button>
+          </div>
+
+          <!-- Hostelworld -->
+          <div class="ota-card">
+            <div class="ota-card-header">
+              <div class="ota-logo">🌍</div>
+              <span class="ota-status-badge ota-disconnected">○ No conectado</span>
+            </div>
+            <div class="ota-name">Hostelworld</div>
+            <div class="ota-desc">Especializado en hostels y camas en dorm · Gran audiencia mochilera</div>
+            <div class="ota-stats">
+              <div class="ota-stat"><div class="ota-stat-num">0</div><div class="ota-stat-label">Reservas</div></div>
+              <div class="ota-stat"><div class="ota-stat-num">—</div><div class="ota-stat-label">Ingresos</div></div>
+            </div>
+            <div class="ota-sync-info">⚠️ No conectado · Requiere API key de Hostelworld</div>
+            <button class="ota-action-btn ota-btn-connect" onclick="showToast('Iniciando conexión con Hostelworld...', '🔗')">
+              + Conectar Hostelworld
+            </button>
+          </div>
+
+          <!-- Expedia -->
+          <div class="ota-card">
+            <div class="ota-card-header">
+              <div class="ota-logo">✈️</div>
+              <span class="ota-status-badge ota-disconnected">○ No conectado</span>
+            </div>
+            <div class="ota-name">Expedia / Hotels.com</div>
+            <div class="ota-desc">Red Expedia Group · Mayor volumen de viajeros de Norteamérica</div>
+            <div class="ota-stats">
+              <div class="ota-stat"><div class="ota-stat-num">0</div><div class="ota-stat-label">Reservas</div></div>
+              <div class="ota-stat"><div class="ota-stat-num">—</div><div class="ota-stat-label">Ingresos</div></div>
+            </div>
+            <div class="ota-sync-info">⚠️ No conectado · Requiere cuenta de proveedor</div>
+            <button class="ota-action-btn ota-btn-connect" onclick="showToast('Iniciando conexión con Expedia...', '🔗')">
+              + Conectar Expedia
+            </button>
+          </div>
+        </div>
+
+        <!-- Imported reservations log -->
+        <div class="ota-import-table">
+          <div class="ota-import-header">Reservas importadas este mes desde OTA</div>
+          <div class="ota-import-row">
+            <span class="ota-import-source ota-source-booking">Booking</span>
+            <div class="g-avatar" style="background:#b45309;width:30px;height:30px;font-size:0.6rem;">MT</div>
+            <div style="flex:1;">
+              <div style="font-size:0.82rem;font-weight:700;color:var(--gray-800);">Michael Thompson</div>
+              <div style="font-size:0.7rem;color:var(--gray-400);">Dorm C cama 4 · 12-15 abr · $45</div>
+            </div>
+            <span class="status-badge s-confirmed">Confirmada</span>
+          </div>
+          <div class="ota-import-row">
+            <span class="ota-import-source ota-source-booking">Booking</span>
+            <div class="g-avatar" style="background:#1d4ed8;width:30px;height:30px;font-size:0.6rem;">KW</div>
+            <div style="flex:1;">
+              <div style="font-size:0.82rem;font-weight:700;color:var(--gray-800);">Karl Weber</div>
+              <div style="font-size:0.7rem;color:var(--gray-400);">Privada 1 · 7-12 abr · $225</div>
+            </div>
+            <span class="status-badge s-confirmed">In-house</span>
+          </div>
+          <div class="ota-import-row">
+            <span class="ota-import-source ota-source-booking">Booking</span>
+            <div class="g-avatar" style="background:#be185d;width:30px;height:30px;font-size:0.6rem;">AR</div>
+            <div style="flex:1;">
+              <div style="font-size:0.82rem;font-weight:700;color:var(--gray-800);">Amara Rodríguez</div>
+              <div style="font-size:0.7rem;color:var(--gray-400);">Privada 2 · 14-17 abr · $135</div>
+            </div>
+            <span class="status-badge s-pending">Pago pend.</span>
+          </div>
+          <div class="ota-import-row">
+            <span class="ota-import-source ota-source-airbnb">Airbnb</span>
+            <div class="g-avatar" style="background:#7c3aed;width:30px;height:30px;font-size:0.6rem;">SA</div>
+            <div style="flex:1;">
+              <div style="font-size:0.82rem;font-weight:700;color:var(--gray-800);">Sofia Arias</div>
+              <div style="font-size:0.7rem;color:var(--gray-400);">Privada 2 · 8-11 abr · $135</div>
+            </div>
+            <span class="status-badge s-checkin">CI hoy</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ REPORTES ════════════════════════════════════════ -->
+      <div class="view" id="view-reportes">
+        <div class="view-header">
+          <div>
+            <div class="view-header-title">Reportes</div>
+            <div class="view-header-sub">Genera y exporta reportes de tu hostel</div>
+          </div>
+        </div>
+
+        <!-- Report type selector -->
+        <div class="report-types">
+          <div class="report-card selected" id="rtype-occ" onclick="selectReport('occ', this)">
+            <span class="report-card-icon">📊</span>
+            <div class="report-card-title">Ocupación</div>
+            <div class="report-card-desc">Por período y tipo de cama</div>
+          </div>
+          <div class="report-card" id="rtype-ing" onclick="selectReport('ing', this)">
+            <span class="report-card-icon">💰</span>
+            <div class="report-card-title">Ingresos</div>
+            <div class="report-card-desc">Desglose completo por día</div>
+          </div>
+          <div class="report-card" id="rtype-guest" onclick="selectReport('guest', this)">
+            <span class="report-card-icon">👥</span>
+            <div class="report-card-title">Huéspedes</div>
+            <div class="report-card-desc">Frecuentes y nuevos</div>
+          </div>
+          <div class="report-card" id="rtype-team" onclick="selectReport('team', this)">
+            <span class="report-card-icon">👤</span>
+            <div class="report-card-title">Equipo</div>
+            <div class="report-card-desc">Turnos y actividad</div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="report-controls">
+          <div class="report-date-range">
+            📅 Desde: <input type="date" value="2026-04-01"> — Hasta: <input type="date" value="2026-04-08">
+          </div>
+          <button class="export-pdf-btn" onclick="showToast('Generando PDF...', '📄')">📄 Exportar PDF</button>
+          <button class="export-excel-btn" onclick="showToast('Exportando a Excel...', '📊')">📊 Exportar Excel</button>
+        </div>
+
+        <!-- Report preview -->
+        <div class="report-preview">
+          <div class="report-preview-header">
+            <div>
+              <div class="report-preview-title">Reporte de Ocupación — Bocas del Toro</div>
+              <div class="report-preview-sub">1 abr 2026 – 8 abr 2026 · Generado el 8 abr 11:58 AM</div>
+            </div>
+          </div>
+          <div class="report-occ-grid">
+            <div class="report-occ-card">
+              <div class="roc-num">92%</div>
+              <div class="roc-label">Ocupación promedio</div>
+            </div>
+            <div class="report-occ-card">
+              <div class="roc-num">156</div>
+              <div class="roc-label">Noches vendidas</div>
+            </div>
+            <div class="report-occ-card">
+              <div class="roc-num">34</div>
+              <div class="roc-label">Reservas totales</div>
+            </div>
+            <div class="report-occ-card">
+              <div class="roc-num">$19</div>
+              <div class="roc-label">RevPAB (ingreso por cama)</div>
+            </div>
+            <div class="report-occ-card">
+              <div class="roc-num">2.6</div>
+              <div class="roc-label">Estadía promedio (noches)</div>
+            </div>
+            <div class="report-occ-card">
+              <div class="roc-num">$87</div>
+              <div class="roc-label">Ingreso promedio por reserva</div>
+            </div>
+          </div>
+          <div style="padding:0 20px 20px;">
+            <table class="fin-table">
+              <thead>
+                <tr><th>Fecha</th><th>Camas ocup.</th><th>Ocup. %</th><th>Llegadas</th><th>Salidas</th><th>Ingresos</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Mar 1 abr</td><td>19/24</td><td>79%</td><td>4</td><td>2</td><td class="td-green">$320</td></tr>
+                <tr><td>Jue 2 abr</td><td>18/24</td><td>75%</td><td>3</td><td>4</td><td class="td-green">$285</td></tr>
+                <tr><td>Vie 3 abr</td><td>21/24</td><td>88%</td><td>5</td><td>2</td><td class="td-green">$340</td></tr>
+                <tr><td>Sáb 4 abr</td><td>22/24</td><td>92%</td><td>6</td><td>3</td><td class="td-green">$360</td></tr>
+                <tr><td>Dom 5 abr</td><td>20/24</td><td>83%</td><td>3</td><td>5</td><td class="td-green">$295</td></tr>
+                <tr><td>Lun 6 abr</td><td>21/24</td><td>88%</td><td>5</td><td>2</td><td class="td-green">$410</td></tr>
+                <tr><td>Mar 7 abr</td><td>23/24</td><td>96%</td><td>7</td><td>1</td><td class="td-green">$485</td></tr>
+                <tr><td>Mié 8 abr</td><td>22/24</td><td>92%</td><td>8</td><td>5</td><td class="td-green">$470</td></tr>
+                <tr><td colspan="2" style="font-weight:800;">PROMEDIO / TOTAL</td><td class="td-primary" style="font-weight:800;">87%</td><td style="font-weight:800;">41</td><td style="font-weight:800;">24</td><td class="td-green" style="font-weight:800;">$2,965</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- ══ BOTTOM NAV (MOBILE) ════════════════════════════════════ -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bnav-item active" id="bnav-dashboard" onclick="showView('dashboard', this); updateBottomNav('dashboard')">
+    <span class="bnav-icon">⊞</span>
+    <span class="bnav-label">Inicio</span>
+  </button>
+  <button class="bnav-item" id="bnav-reservas" onclick="showView('reservas', this); updateBottomNav('reservas')">
+    <span class="bnav-icon">📅</span>
+    <span class="bnav-label">Reservas</span>
+    <span class="bnav-badge">3</span>
+  </button>
+  <button class="bnav-plus" onclick="showView('nueva-reserva', null); updateBottomNav('nueva-reserva')" title="Nueva Reserva">
+    +
+  </button>
+  <button class="bnav-item" id="bnav-caja" onclick="showView('caja', this); updateBottomNav('caja')">
+    <span class="bnav-icon">💵</span>
+    <span class="bnav-label">Caja</span>
+  </button>
+  <button class="bnav-item" id="bnav-more" onclick="toggleMoreMenu()">
+    <span class="bnav-icon">⋯</span>
+    <span class="bnav-label">Más</span>
+  </button>
+</nav>
+
+<!-- More menu (mobile) -->
+<div class="more-menu" id="more-menu">
+  <button class="more-menu-item" onclick="showView('tareas', null); updateBottomNav('tareas'); closeMoreMenu()">🧹 Tareas & Housekeeping</button>
+  <button class="more-menu-item" onclick="showView('equipo', null); updateBottomNav('equipo'); closeMoreMenu()">👥 Gestión de Equipo</button>
+  <button class="more-menu-item" onclick="showView('finanzas', null); updateBottomNav('finanzas'); closeMoreMenu()">📊 Finanzas</button>
+  <button class="more-menu-item" onclick="showView('canales-ota', null); updateBottomNav('canales-ota'); closeMoreMenu()">🔗 Canales OTA</button>
+  <button class="more-menu-item" onclick="showView('reportes', null); updateBottomNav('reportes'); closeMoreMenu()">📁 Reportes</button>
+</div>
+
+<!-- ══ TOAST ════════════════════════════════════════════════ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span id="toast-msg">Acción completada</span>
+  <button class="toast-close" onclick="hideToast()">✕</button>
+</div>
+
+<script>
+// ── Navigation ──
+function showView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById('view-' + id);
+  if (view) view.classList.add('active');
+
+  if (btn) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  const titles = {
+    dashboard: 'Dashboard', reservas: 'Reservas',
+    'nueva-reserva': 'Nueva Reserva', caja: 'Caja del turno',
+    tareas: 'Tareas & Housekeeping', equipo: 'Gestión de Equipo',
+    finanzas: 'Finanzas', 'canales-ota': 'Canales OTA', reportes: 'Reportes'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+
+  if (id === 'dashboard') {
+    setTimeout(() => { document.getElementById('dash-occ-bar').style.width = '92%'; }, 100);
+  }
+  if (id === 'nueva-reserva') {
+    wCurrentStep = 1;
+    renderWStep();
+  }
+  document.getElementById('notif-panel').classList.remove('open');
+  closeMoreMenu();
+}
+
+function updateBottomNav(id) {
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('bnav-' + id);
+  if (btn) btn.classList.add('active');
+}
+
+// ── Notifications ──
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+}
+function clearNotifs() {
+  document.querySelectorAll('.notif-unread').forEach(d => d.remove());
+  document.getElementById('notif-dot').style.display = 'none';
+  showToast('Todas las notificaciones marcadas como leídas', '✅');
+  document.getElementById('notif-panel').classList.remove('open');
+}
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notif-panel');
+  if (!panel.contains(e.target) && !e.target.closest('.notif-btn')) {
+    panel.classList.remove('open');
+  }
+  const moreMenu = document.getElementById('more-menu');
+  if (!moreMenu.contains(e.target) && !e.target.closest('#bnav-more')) {
+    moreMenu.classList.remove('open');
+  }
+});
+
+// ── More menu (mobile) ──
+function toggleMoreMenu() {
+  document.getElementById('more-menu').classList.toggle('open');
+}
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.remove('open');
+}
+
+// ── Wizard (Nueva Reserva inline) ──
+let wCurrentStep = 1;
+
+function updateWRoomOptions() {
+  const type = document.getElementById('w-room-type').value;
+  const sel = document.getElementById('w-room-select');
+  const preview = document.getElementById('w-price-preview');
+  if (type === 'dorm') {
+    sel.innerHTML = '<option>Dorm A — cama 2 ($15/noche)</option><option>Dorm B — cama 4 ($15/noche)</option><option>Dorm C — cama 1 ($15/noche)</option>';
+    preview.style.display = 'block';
+    preview.textContent = '💡 Precio: $15/noche por cama';
+  } else if (type === 'privada') {
+    sel.innerHTML = '<option>Privada 1 — Doble ($45/noche)</option><option>Privada 2 — Triple ($45/noche)</option>';
+    preview.style.display = 'block';
+    preview.textContent = '💡 Precio: $45/noche por habitación';
+  } else {
+    sel.innerHTML = '<option value="">Primero selecciona tipo</option>';
+    preview.style.display = 'none';
+  }
+}
+
+function selectWPayment(el) {
+  document.querySelectorAll('#view-nueva-reserva .payment-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function renderWStep() {
+  [1,2,3].forEach(i => {
+    document.getElementById('wstep-' + i).style.display = i === wCurrentStep ? 'block' : 'none';
+    const sp = document.getElementById('wsp' + i);
+    sp.classList.remove('active', 'done');
+    if (i < wCurrentStep) sp.classList.add('done');
+    if (i === wCurrentStep) sp.classList.add('active');
+  });
+  [1,2].forEach(i => {
+    const line = document.getElementById('wline' + i);
+    line.classList.toggle('done', i < wCurrentStep);
+  });
+  document.getElementById('w-btn-back').style.display = wCurrentStep > 1 ? 'inline-flex' : 'none';
+  document.getElementById('w-btn-next').style.display = wCurrentStep < 3 ? 'inline-flex' : 'none';
+  document.getElementById('w-btn-confirm').style.display = wCurrentStep === 3 ? 'inline-flex' : 'none';
+  const subs = ['Paso 1 de 3 — Habitación y fechas', 'Paso 2 de 3 — Datos del huésped y pago', 'Paso 3 de 3 — Confirmar reserva'];
+  document.getElementById('wstep-sub').textContent = subs[wCurrentStep - 1];
+}
+
+function wStepNext() {
+  if (wCurrentStep === 1) {
+    const roomType = document.getElementById('w-room-type').value;
+    if (!roomType) { showToast('Selecciona el tipo de alojamiento', '⚠️'); return; }
+  }
+  if (wCurrentStep === 2) {
+    const name = document.getElementById('w-guest-name').value.trim();
+    if (!name) { showToast('Ingresa el nombre del huésped', '⚠️'); return; }
+    const roomSel = document.getElementById('w-room-select');
+    const ciDate = document.getElementById('w-ci-date').value;
+    const coDate = document.getElementById('w-co-date').value;
+    const ci = new Date(ciDate);
+    const co = new Date(coDate);
+    const nights = Math.max(1, Math.round((co - ci) / (1000 * 60 * 60 * 24)));
+    const price = document.getElementById('w-room-type').value === 'privada' ? 45 : 15;
+    const total = nights * price;
+    const lastName = document.getElementById('w-guest-last').value.trim();
+
+    document.getElementById('wsum-room').textContent = roomSel.value.split('(')[0].trim();
+    document.getElementById('wsum-ci').textContent = ci.toLocaleDateString('es-PA', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('wsum-co').textContent = co.toLocaleDateString('es-PA', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('wsum-nights').textContent = nights + (nights === 1 ? ' noche' : ' noches');
+    document.getElementById('wsum-guest').textContent = name + (lastName ? ' ' + lastName : '');
+    const payMethod = document.querySelector('#view-nueva-reserva .payment-opt.selected .payment-opt-label')?.textContent || 'Tarjeta';
+    document.getElementById('wsum-payment').textContent = payMethod;
+    document.getElementById('wsum-total').textContent = '$' + total.toFixed(2);
+  }
+  if (wCurrentStep < 3) { wCurrentStep++; renderWStep(); }
+}
+
+function wStepBack() {
+  if (wCurrentStep > 1) { wCurrentStep--; renderWStep(); }
+}
+
+function wConfirm() {
+  showView('reservas', null);
+  setTimeout(() => showToast('Reserva creada ✓ — Pago registrado en caja del turno', '🎉'), 200);
+  wCurrentStep = 1;
+  renderWStep();
+  document.getElementById('w-room-type').value = '';
+  document.getElementById('w-room-select').innerHTML = '<option value="">Primero selecciona tipo</option>';
+  document.getElementById('w-guest-name').value = '';
+  document.getElementById('w-price-preview').style.display = 'none';
+}
+
+// ── Tasks ──
+function toggleTask(id) {
+  const item = document.getElementById(id);
+  item.classList.toggle('done');
+  if (item.classList.contains('done')) {
+    showToast('Tarea completada', '✅');
+  }
+}
+function filterTasks(btn, filter) {
+  document.querySelectorAll('.task-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const items = document.querySelectorAll('.task-item');
+  items.forEach(item => {
+    if (filter === 'all') item.style.display = '';
+    else if (filter === 'pending') item.style.display = item.classList.contains('done') ? 'none' : '';
+    else if (filter === 'done') item.style.display = item.classList.contains('done') ? '' : 'none';
+    else if (filter === 'urgent') {
+      const isUrgent = item.querySelector('.p-high');
+      item.style.display = isUrgent ? '' : 'none';
+    }
+  });
+}
+
+// ── Reservas filter ──
+function filterReservas(btn, filter) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const rows = document.querySelectorAll('#view-reservas .table-row');
+  rows.forEach(row => {
+    if (filter === 'all') { row.style.display = ''; return; }
+    const rowFilter = row.getAttribute('data-filter') || '';
+    row.style.display = rowFilter.includes(filter) ? '' : 'none';
+  });
+}
+function searchReservas(val) {
+  const rows = document.querySelectorAll('#view-reservas .table-row');
+  rows.forEach(row => {
+    row.style.display = val === '' || row.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ── Finanzas ──
+function filterFinanzas(btn, period) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const sub = document.querySelector('#view-finanzas .view-header-sub');
+  if (period === 'semana') sub.textContent = 'Semana 1–8 abr 2026';
+  else if (period === 'mes') sub.textContent = 'Mes de abril 2026';
+  else { sub.textContent = 'Período personalizado'; showToast('Selecciona el rango de fechas', '📅'); }
+}
+
+// ── Reportes ──
+function selectReport(type, el) {
+  document.querySelectorAll('.report-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  showToast('Reporte de ' + el.querySelector('.report-card-title').textContent + ' cargado', '📊');
+}
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg, icon = '✅') {
+  clearTimeout(toastTimer);
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+function hideToast() {
+  document.getElementById('toast').classList.remove('show');
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { document.getElementById('dash-occ-bar').style.width = '92%'; }, 300);
+});
+</script>
+</body>
+</html>

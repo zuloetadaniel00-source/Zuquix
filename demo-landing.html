@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zuquix — El PMS que tu hostel necesita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --primary-light: #ccfbf1;
+  --accent: #f97316;
+  --green: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --yellow: #fbbf24;
+  --bg: #f8fafc;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.06);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.15), 0 8px 10px -6px rgba(0,0,0,.08);
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--gray-700); line-height: 1.6; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+
+/* ── NAV ── */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10, 15, 20, 0.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0 40px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.3s ease;
+}
+.nav-logo { font-size: 1.35rem; font-weight: 900; color: #14b8a6; letter-spacing: -0.04em; }
+.nav-logo span { color: white; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a { font-size: 0.875rem; font-weight: 500; color: rgba(255,255,255,0.65); transition: color 0.2s; cursor: pointer; }
+.nav-links a:hover { color: white; }
+.nav-actions { display: flex; align-items: center; gap: 12px; }
+.nav-login { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.7); cursor: pointer; padding: 8px 16px; }
+.nav-cta {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: white; padding: 9px 22px; border-radius: 999px;
+  font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(20,184,166,0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(20,184,166,0.45); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #060d14 0%, #0a1628 40%, #0c1f1e 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 100px 24px 80px; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 900px; height: 900px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(13,148,136,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 64px; max-width: 1100px; width: 100%; position: relative; z-index: 1;
+}
+.hero-content { flex: 1; min-width: 0; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(20,184,166,0.12); border: 1px solid rgba(20,184,166,0.25);
+  color: #14b8a6; padding: 7px 18px; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 28px;
+  animation: fadeInDown 0.6s ease;
+}
+.hero-badge .dot { width: 6px; height: 6px; background: #14b8a6; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 900;
+  color: white; line-height: 1.08; letter-spacing: -0.04em;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.7s ease 0.1s both;
+}
+.hero h1 .teal { color: #14b8a6; }
+.hero h1 .underline { position: relative; display: inline-block; }
+.hero h1 .underline::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+  height: 3px; background: linear-gradient(90deg, #0d9488, #14b8a6); border-radius: 2px;
+}
+.hero-sub {
+  font-size: clamp(0.95rem, 2vw, 1.15rem); color: rgba(255,255,255,0.6);
+  margin-bottom: 36px; font-weight: 400; line-height: 1.7;
+  animation: fadeInUp 0.7s ease 0.2s both; max-width: 520px;
+}
+.hero-ctas {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+  animation: fadeInUp 0.7s ease 0.3s both;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: white; padding: 15px 36px; border-radius: 999px;
+  font-size: 1rem; font-weight: 700; cursor: pointer; border: none;
+  box-shadow: 0 4px 24px rgba(20,184,166,0.4);
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: transform 0.2s, box-shadow 0.2s; font-family: inherit;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(20,184,166,0.5); }
+.btn-ghost {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18);
+  color: white; padding: 15px 32px; border-radius: 999px;
+  font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: background 0.2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.12); }
+.hero-microcopy {
+  font-size: 0.78rem; color: rgba(255,255,255,0.38); margin-bottom: 36px;
+  animation: fadeInUp 0.7s ease 0.35s both;
+}
+.hero-social-proof {
+  display: flex; align-items: center; gap: 16px;
+  animation: fadeInUp 0.7s ease 0.4s both;
+}
+.avatar-stack { display: flex; }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid #0a1628;
+  margin-left: -7px; font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: white;
+}
+.avatar:first-child { margin-left: 0; }
+.stars { color: var(--yellow); letter-spacing: 1px; font-size: 0.9rem; }
+.sp-text { font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 500; }
+
+/* ── PHONE MOCKUP ── */
+.phone-hero-wrap {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  animation: fadeInUp 0.8s ease 0.4s both;
+}
+.phone-device {
+  width: 260px; height: 520px;
+  background: #0d1117;
+  border-radius: 42px;
+  border: 7px solid #1e2330;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.7), 20px 20px 60px rgba(13,148,136,0.12);
+}
+.phone-notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100px; height: 24px; background: #0d1117; border-radius: 0 0 18px 18px;
+  z-index: 10;
+}
+.phone-status {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px 4px; font-size: 0.6rem; color: rgba(255,255,255,0.5); font-weight: 700;
+}
+.phone-screens { position: relative; flex: 1; overflow: hidden; }
+.pscreen {
+  position: absolute; inset: 0;
+  padding: 6px 10px 10px;
+  opacity: 0; transform: translateX(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.pscreen.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+.ps-appbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 2px; margin-bottom: 4px;
+}
+.ps-title { font-size: 0.75rem; font-weight: 900; color: white; letter-spacing: -0.02em; }
+.ps-live {
+  font-size: 0.55rem; font-weight: 700; color: #10b981;
+  background: rgba(16,185,129,0.12); padding: 2px 8px; border-radius: 999px;
+}
+/* Screen 1: Dashboard */
+.psc-occ-widget {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  border-radius: 10px; padding: 10px 12px;
+}
+.psc-occ-num { font-size: 1.6rem; font-weight: 900; color: white; line-height: 1; }
+.psc-occ-label { font-size: 0.5rem; color: rgba(255,255,255,0.75); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.psc-occ-bar-bg { height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.psc-occ-bar-fill { height: 100%; background: white; border-radius: 2px; width: 73%; }
+.psc-mini-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+.psc-mstat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 7px 6px; text-align: center; }
+.psc-msnum { font-size: 0.9rem; font-weight: 900; letter-spacing: -0.02em; }
+.psc-mslabel { font-size: 0.45rem; color: rgba(255,255,255,0.35); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+.psc-section-label { font-size: 0.5rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+.psc-guest-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.psc-gavt { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.45rem; font-weight: 900; color: white; flex-shrink: 0; }
+.psc-gname { font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.85); }
+.psc-gmeta { font-size: 0.48rem; color: rgba(255,255,255,0.35); }
+.psc-badge-in { margin-left: auto; font-size: 0.45rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: rgba(16,185,129,0.15); color: #10b981; flex-shrink: 0; }
+/* Screen 2: Reservas */
+.psc-filter-row { display: flex; gap: 4px; }
+.psc-filter { font-size: 0.5rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); cursor: pointer; }
+.psc-filter.active { background: rgba(20,184,166,0.15); border-color: #14b8a6; color: #14b8a6; }
+.psc-book-item { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.psc-binfo { flex: 1; min-width: 0; }
+.psc-bname { font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.85); }
+.psc-bmeta { font-size: 0.48rem; color: rgba(255,255,255,0.35); }
+.psc-bamt { font-size: 0.62rem; font-weight: 800; color: #10b981; text-align: right; }
+.psc-s-badge { font-size: 0.42rem; font-weight: 800; padding: 1px 5px; border-radius: 999px; background: rgba(59,130,246,0.12); color: #60a5fa; display: block; text-align: right; margin-top: 2px; white-space: nowrap; }
+.psc-s-badge.ci { background: rgba(16,185,129,0.12); color: #10b981; }
+.psc-s-badge.ih { background: rgba(139,92,246,0.12); color: #a78bfa; }
+/* Screen 3: Nueva Reserva */
+.psc-wizard-steps { display: flex; align-items: center; gap: 0; padding: 2px 0; }
+.psc-wstep { font-size: 0.45rem; font-weight: 700; color: rgba(255,255,255,0.3); flex: 1; text-align: center; }
+.psc-wstep.active { color: #14b8a6; }
+.psc-wstep.done { color: #10b981; }
+.psc-wline { height: 1px; background: rgba(255,255,255,0.1); width: 12px; flex-shrink: 0; }
+.psc-form-group { margin-bottom: 6px; }
+.psc-flabel { font-size: 0.5rem; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 3px; }
+.psc-fselect { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 5px 8px; font-size: 0.55rem; color: rgba(255,255,255,0.75); }
+.psc-frow { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.psc-finput { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 5px 8px; font-size: 0.55rem; color: rgba(255,255,255,0.75); }
+.psc-total-line { background: rgba(20,184,166,0.1); border: 1px solid rgba(20,184,166,0.2); border-radius: 7px; padding: 6px 8px; font-size: 0.6rem; font-weight: 800; color: #14b8a6; text-align: center; }
+.psc-next-btn { background: linear-gradient(135deg, #0d9488, #14b8a6); border-radius: 7px; padding: 7px; font-size: 0.6rem; font-weight: 800; color: white; text-align: center; }
+/* Screen 4: Caja */
+.psc-caja-hero { background: linear-gradient(135deg, #1c1917, #292524); border-radius: 10px; padding: 10px 12px; }
+.psc-caja-label { font-size: 0.5rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; }
+.psc-caja-total { font-size: 1.8rem; font-weight: 900; color: #fbbf24; letter-spacing: -0.04em; line-height: 1; margin-top: 2px; }
+.psc-caja-sub { font-size: 0.48rem; color: rgba(255,255,255,0.35); margin-top: 3px; }
+.psc-caja-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.psc-caja-row:last-child { border-bottom: none; }
+.psc-cr-label { font-size: 0.55rem; color: rgba(255,255,255,0.45); }
+.psc-cr-val { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.75); }
+.psc-cr-val.green { color: #10b981; }
+.psc-mov-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.psc-mov-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.psc-mov-dot.ing { background: #10b981; }
+.psc-mov-dot.eg { background: #ef4444; }
+.psc-mov-desc { flex: 1; font-size: 0.52rem; color: rgba(255,255,255,0.65); }
+.psc-mov-amt { font-size: 0.55rem; font-weight: 800; }
+.psc-mov-amt.ing { color: #10b981; }
+.psc-mov-amt.eg { color: #ef4444; }
+.phone-device-inner {
+  display: flex; flex-direction: column; height: 100%; padding-top: 24px;
+}
+.phone-home-bar {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 80px; height: 4px; background: rgba(255,255,255,0.25); border-radius: 2px;
+}
+.phone-dots-row { display: flex; gap: 6px; justify-content: center; }
+.pd {
+  width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2);
+  transition: all 0.3s; cursor: pointer;
+}
+.pd.active { background: #14b8a6; width: 18px; border-radius: 3px; }
+.phone-screen-labels { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+.phone-screen-label {
+  font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.35);
+  cursor: pointer; transition: color 0.2s; padding: 2px 8px; border-radius: 999px;
+}
+.phone-screen-label.active { color: #14b8a6; background: rgba(20,184,166,0.12); }
+
+/* ── SECTIONS ── */
+section { padding: 96px 24px; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--primary); margin-bottom: 12px;
+}
+.section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; color: var(--gray-900); letter-spacing: -0.03em; margin-bottom: 16px; line-height: 1.15; }
+.section-sub { font-size: 1.05rem; color: var(--gray-500); max-width: 600px; line-height: 1.7; }
+.text-center { text-align: center; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+/* ── SOCIAL PROOF STRIP ── */
+.proof-strip {
+  background: var(--gray-900); padding: 20px 40px;
+  display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap;
+}
+.proof-item { text-align: center; }
+.proof-num { font-size: 1.5rem; font-weight: 900; color: #14b8a6; }
+.proof-label { font-size: 0.72rem; color: rgba(255,255,255,0.45); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.proof-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.08); }
+
+/* ── BENEFICIOS SECTION ── */
+.benefits-section { background: white; }
+.benefits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 48px; }
+.benefit-card {
+  padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--gray-200);
+  background: var(--gray-50); transition: transform 0.2s, box-shadow 0.2s;
+}
+.benefit-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.benefit-emoji { font-size: 2rem; margin-bottom: 14px; display: block; }
+.benefit-card h4 { font-size: 0.95rem; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; line-height: 1.4; }
+.benefit-desc { font-size: 0.83rem; color: var(--gray-500); line-height: 1.65; margin-bottom: 14px; }
+.benefit-badge { font-size: 0.7rem; font-weight: 700; color: var(--primary); padding: 4px 12px; background: var(--primary-light); border-radius: 999px; display: inline-block; }
+
+/* ── TESTIMONIALS ── */
+.testimonials-section { background: white; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 24px; margin-top: 48px; }
+.tcard {
+  background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+  padding: 28px; transition: transform 0.2s, box-shadow 0.2s;
+}
+.tcard:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.tcard .stars { color: var(--yellow); font-size: 0.95rem; margin-bottom: 14px; letter-spacing: 2px; }
+.tcard .quote { font-size: 0.9rem; color: var(--gray-600); line-height: 1.75; font-style: italic; margin-bottom: 18px; }
+.tcard-author { display: flex; align-items: center; gap: 12px; }
+.tcard-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: white; flex-shrink: 0; }
+.tcard-name { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
+.tcard-meta { font-size: 0.75rem; color: var(--gray-400); margin-top: 1px; }
+
+/* ── PRICING ── */
+.pricing-section { background: white; }
+.pricing-headline {
+  background: linear-gradient(135deg, #f0fdfa, white);
+  border: 1px solid var(--primary-light); border-radius: var(--radius-lg);
+  padding: 20px 28px; text-align: center; margin-bottom: 36px; margin-top: 36px;
+  font-size: 1.05rem; color: var(--primary-dark); font-weight: 700;
+}
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; margin-bottom: 36px; }
+.pc {
+  border: 2px solid var(--gray-200); border-radius: var(--radius-xl); padding: 32px;
+  position: relative; background: white; transition: transform 0.2s;
+}
+.pc:hover { transform: translateY(-4px); }
+.pc.featured { border-color: var(--primary); background: linear-gradient(145deg, #f0fdfa, white); }
+.pc-badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; padding: 5px 18px; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 800; white-space: nowrap; letter-spacing: 0.04em;
+}
+.pc-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: var(--gray-400); margin-bottom: 10px; }
+.pc-price-wrap { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+.pc-price { font-size: 2.8rem; font-weight: 900; color: var(--gray-900); letter-spacing: -0.04em; }
+.pc-price sup { font-size: 1.1rem; font-weight: 700; vertical-align: super; }
+.pc-period { font-size: 0.85rem; color: var(--gray-400); }
+.pc-desc { font-size: 0.82rem; color: var(--gray-500); margin: 14px 0 22px; line-height: 1.6; }
+.pc-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.pc-features li { font-size: 0.83rem; color: var(--gray-600); display: flex; gap: 10px; align-items: flex-start; }
+.pc-features li::before { content: '✓'; color: var(--green); font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+.pc-features li.na { color: var(--gray-300); }
+.pc-features li.na::before { content: '—'; color: var(--gray-200); }
+.pc-btn {
+  width: 100%; padding: 13px; border-radius: 999px; font-size: 0.88rem; font-weight: 700;
+  border: none; cursor: pointer; transition: all 0.2s; font-family: inherit;
+}
+.pc-btn-primary { background: var(--primary); color: white; }
+.pc-btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.pc-btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); }
+.pc-btn-outline:hover { background: var(--primary-light); }
+
+/* ── FAQ ── */
+.faq-section { background: var(--gray-50); }
+.faq-list { max-width: 720px; margin: 48px auto 0; }
+.faq-item {
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 10px; background: white;
+}
+.faq-q {
+  padding: 18px 22px; font-size: 0.92rem; font-weight: 700; color: var(--gray-800);
+  background: white; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; transition: background 0.2s; user-select: none;
+}
+.faq-q:hover { background: var(--gray-50); }
+.faq-icon { color: var(--primary); font-size: 1.4rem; font-weight: 300; line-height: 1; transition: transform 0.3s; }
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+.faq-a {
+  padding: 0 22px; max-height: 0; overflow: hidden;
+  font-size: 0.875rem; color: var(--gray-600); line-height: 1.75;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  border-top: 0px solid var(--gray-200);
+}
+.faq-item.open .faq-a {
+  max-height: 300px; padding: 16px 22px 18px;
+  border-top: 1px solid var(--gray-200);
+}
+
+/* ── CTA FINAL ── */
+.cta-section {
+  background: linear-gradient(135deg, #060d14 0%, #0c1f1e 50%, #0a1628 100%);
+  padding: 96px 24px; text-align: center; position: relative; overflow: hidden;
+}
+.cta-section::before {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(13,148,136,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-section h2 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: white; letter-spacing: -0.03em; margin-bottom: 16px; line-height: 1.15; }
+.cta-section p { font-size: 1.05rem; color: rgba(255,255,255,0.6); max-width: 500px; margin: 0 auto 36px; line-height: 1.7; }
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: white; color: var(--primary-dark); padding: 17px 40px;
+  border-radius: 999px; font-size: 1rem; font-weight: 800;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); cursor: pointer; border: none; font-family: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.cta-microcopy { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-top: 14px; }
+.cta-trust { display: flex; justify-content: center; gap: 24px; margin-top: 32px; flex-wrap: wrap; }
+.cta-trust-item { font-size: 0.78rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
+
+/* ── FOOTER ── */
+footer {
+  background: #060d14; padding: 64px 40px 32px; border-top: 1px solid rgba(255,255,255,0.05);
+}
+.footer-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px;
+  margin-bottom: 48px;
+}
+.footer-brand-col .footer-logo { font-size: 1.4rem; font-weight: 900; color: #14b8a6; letter-spacing: -0.04em; margin-bottom: 12px; }
+.footer-brand-col p { font-size: 0.82rem; color: rgba(255,255,255,0.4); line-height: 1.7; max-width: 240px; margin-bottom: 20px; }
+.footer-social { display: flex; gap: 10px; }
+.footer-social-btn {
+  width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; cursor: pointer; transition: background 0.2s;
+}
+.footer-social-btn:hover { background: rgba(255,255,255,0.12); }
+.footer-col h4 { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); margin-bottom: 16px; }
+.footer-col a { display: block; font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-bottom: 10px; cursor: pointer; transition: color 0.2s; }
+.footer-col a:hover { color: rgba(255,255,255,0.8); }
+.footer-bottom {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.75rem; color: rgba(255,255,255,0.25); flex-wrap: wrap; gap: 12px;
+}
+.footer-bottom a { color: rgba(255,255,255,0.3); cursor: pointer; }
+.footer-bottom a:hover { color: rgba(255,255,255,0.6); }
+.footer-status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #10b981; font-weight: 700; }
+.footer-status-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+
+/* Animations */
+@keyframes fadeInDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+.animate-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.animate-in.visible { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 1024px) {
+  .hero-inner { gap: 40px; }
+  .phone-device { width: 220px; height: 440px; }
+}
+@media (max-width: 768px) {
+  .nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero-inner { flex-direction: column; align-items: center; }
+  .hero-content { text-align: center; }
+  .hero-ctas { justify-content: center; }
+  .hero-social-proof { justify-content: center; }
+  .phone-hero-wrap { margin-top: 20px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .proof-strip { gap: 24px; padding: 20px; }
+  .proof-divider { display: none; }
+  .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .footer-inner .footer-brand-col { grid-column: 1 / -1; }
+  .footer-bottom { flex-direction: column; text-align: center; }
+}
+@media (max-width: 480px) {
+  .footer-inner { grid-template-columns: 1fr; }
+  .phone-device { width: 240px; height: 480px; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .benefits-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-logo">Zuquix</div>
+  <div class="nav-links">
+    <a onclick="scrollToId('beneficios')">Beneficios</a>
+    <a onclick="scrollToId('testimonials')">Testimonios</a>
+    <a onclick="scrollToId('pricing')">Precios</a>
+    <a onclick="scrollToId('faq')">FAQ</a>
+  </div>
+  <div class="nav-actions">
+    <div class="nav-login" onclick="window.location='demo-app.html'">Iniciar sesión</div>
+    <div class="nav-cta" onclick="scrollToId('cta')">Empieza gratis →</div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div class="hero-inner">
+    <!-- Content -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        🚀 NUEVO — Multi-hostel disponible
+      </div>
+      <h1>
+        Tu hostel.<br>
+        Bajo control.<br>
+        En <span class="teal underline">tiempo real</span>
+      </h1>
+      <p class="hero-sub">
+        El PMS que los hostels de América Latina necesitaban. Sin complicaciones, sin letra chica.
+      </p>
+      <div class="hero-ctas">
+        <button class="btn-primary" onclick="scrollToId('cta')">
+          Comenzar gratis →
+        </button>
+        <button class="btn-ghost" onclick="window.location='demo-app.html'">
+          ▶ Ver demo en vivo
+        </button>
+      </div>
+      <p class="hero-microcopy">Sin tarjeta de crédito · Cancela cuando quieras · Configuración en 15 min</p>
+      <div class="hero-social-proof">
+        <div class="avatar-stack">
+          <div class="avatar" style="background:#0d9488;">MG</div>
+          <div class="avatar" style="background:#7c3aed;">CR</div>
+          <div class="avatar" style="background:#d97706;">AP</div>
+        </div>
+        <div class="stars">★★★★★</div>
+        <span class="sp-text">2,400+ hostels activos</span>
+      </div>
+    </div>
+
+    <!-- Phone Mockup -->
+    <div class="phone-hero-wrap">
+      <div class="phone-device">
+        <div class="phone-notch"></div>
+        <div class="phone-device-inner">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span style="display:flex;gap:3px;align-items:center;font-size:0.55rem;">📶🔋</span>
+          </div>
+          <div class="phone-screens" style="flex:1;position:relative;">
+            <!-- Screen 1: Dashboard -->
+            <div class="pscreen active" id="ps-1">
+              <div class="ps-appbar">
+                <span class="ps-title">Dashboard</span>
+                <span class="ps-live">● Vivo</span>
+              </div>
+              <div class="psc-occ-widget">
+                <div class="psc-occ-num">73%</div>
+                <div class="psc-occ-label">Ocupación · 22 de 30 camas</div>
+                <div class="psc-occ-bar-bg"><div class="psc-occ-bar-fill" style="width:73%"></div></div>
+              </div>
+              <div class="psc-mini-stats">
+                <div class="psc-mstat"><div class="psc-msnum" style="color:#10b981">5</div><div class="psc-mslabel">Check-ins</div></div>
+                <div class="psc-mstat"><div class="psc-msnum" style="color:#ef4444">3</div><div class="psc-mslabel">Salidas</div></div>
+                <div class="psc-mstat"><div class="psc-msnum" style="color:#fbbf24">$410</div><div class="psc-mslabel">Turno</div></div>
+              </div>
+              <div class="psc-section-label">Huéspedes hoy</div>
+              <div class="psc-guest-row">
+                <div class="psc-gavt" style="background:#0d9488">CM</div>
+                <div><div class="psc-gname">Carlos Méndez</div><div class="psc-gmeta">Dorm 6 · A1 · 3n</div></div>
+                <span class="psc-badge-in">PAGADO</span>
+              </div>
+              <div class="psc-guest-row">
+                <div class="psc-gavt" style="background:#7c3aed">LJ</div>
+                <div><div class="psc-gname">Laura Jiménez</div><div class="psc-gmeta">Dorm 4 · B2 · 2n</div></div>
+                <span class="psc-badge-in">PAGADO</span>
+              </div>
+            </div>
+
+            <!-- Screen 2: Reservas -->
+            <div class="pscreen" id="ps-2">
+              <div class="ps-appbar">
+                <span class="ps-title">Reservas</span>
+                <span class="ps-live" style="background:rgba(59,130,246,0.12);color:#60a5fa;">5 hoy</span>
+              </div>
+              <div class="psc-filter-row">
+                <span class="psc-filter active">Todas</span>
+                <span class="psc-filter">Activas</span>
+                <span class="psc-filter">Pendiente</span>
+              </div>
+              <div class="psc-book-item">
+                <div class="psc-gavt" style="background:#0d9488;width:26px;height:26px;flex-shrink:0">CM</div>
+                <div class="psc-binfo"><div class="psc-bname">Carlos Méndez</div><div class="psc-bmeta">Dorm 6 · 8-11 abr</div></div>
+                <div style="text-align:right"><div class="psc-bamt">$45</div><span class="psc-s-badge ci">Pagado</span></div>
+              </div>
+              <div class="psc-book-item">
+                <div class="psc-gavt" style="background:#7c3aed;width:26px;height:26px;flex-shrink:0">LJ</div>
+                <div class="psc-binfo"><div class="psc-bname">Laura Jiménez</div><div class="psc-bmeta">Dorm 4 · 8-10 abr</div></div>
+                <div style="text-align:right"><div class="psc-bamt">$30</div><span class="psc-s-badge ci">Pagado</span></div>
+              </div>
+              <div class="psc-book-item">
+                <div class="psc-gavt" style="background:#1d4ed8;width:26px;height:26px;flex-shrink:0">TW</div>
+                <div class="psc-binfo"><div class="psc-bname">Tom Wilson</div><div class="psc-bmeta">Privada Doble · 8-12 abr</div></div>
+                <div style="text-align:right"><div class="psc-bamt">$120</div><span class="psc-s-badge" style="color:#f59e0b">Pendiente</span></div>
+              </div>
+            </div>
+
+            <!-- Screen 3: Nueva Reserva -->
+            <div class="pscreen" id="ps-3">
+              <div class="ps-appbar">
+                <span class="ps-title">Nueva Reserva</span>
+              </div>
+              <div class="psc-wizard-steps">
+                <div class="psc-wstep active">① Habitación</div>
+                <div class="psc-wline"></div>
+                <div class="psc-wstep">② Huésped</div>
+                <div class="psc-wline"></div>
+                <div class="psc-wstep">③ Confirmar</div>
+              </div>
+              <div class="psc-form-group">
+                <div class="psc-flabel">Tipo de alojamiento</div>
+                <div class="psc-fselect">Cama en dorm ▾</div>
+              </div>
+              <div class="psc-form-group">
+                <div class="psc-flabel">Habitación / Cama</div>
+                <div class="psc-fselect">Dorm 6 — cama A1 ▾</div>
+              </div>
+              <div class="psc-frow">
+                <div class="psc-form-group">
+                  <div class="psc-flabel">Check-in</div>
+                  <div class="psc-finput">08/04/2026</div>
+                </div>
+                <div class="psc-form-group">
+                  <div class="psc-flabel">Check-out</div>
+                  <div class="psc-finput">11/04/2026</div>
+                </div>
+              </div>
+              <div class="psc-total-line">Total: $45.00 · 3 noches</div>
+              <div class="psc-next-btn" style="margin-top:6px;">Siguiente →</div>
+            </div>
+
+            <!-- Screen 4: Caja -->
+            <div class="pscreen" id="ps-4">
+              <div class="ps-appbar">
+                <span class="ps-title">Caja del Turno</span>
+              </div>
+              <div class="psc-caja-hero">
+                <div class="psc-caja-label">Saldo actual</div>
+                <div class="psc-caja-total">$216.50</div>
+                <div class="psc-caja-sub">Turno 8:00 AM - 4:00 PM</div>
+              </div>
+              <div class="psc-caja-row"><span class="psc-cr-label">Apertura</span><span class="psc-cr-val green">$200.00</span></div>
+              <div class="psc-caja-row"><span class="psc-cr-label">Ingresos</span><span class="psc-cr-val green">+$90.00</span></div>
+              <div class="psc-caja-row"><span class="psc-cr-label">Egresos</span><span class="psc-cr-val">-$73.50</span></div>
+              <div class="psc-section-label" style="margin-top:4px;">Movimientos recientes</div>
+              <div class="psc-mov-row"><span class="psc-mov-dot ing"></span><span class="psc-mov-desc">Check-in Carlos M.</span><span class="psc-mov-amt ing">+$45</span></div>
+              <div class="psc-mov-row"><span class="psc-mov-dot ing"></span><span class="psc-mov-desc">Check-in Laura J.</span><span class="psc-mov-amt ing">+$30</span></div>
+              <div class="psc-mov-row"><span class="psc-mov-dot ing"></span><span class="psc-mov-desc">Check-in Marco R.</span><span class="psc-mov-amt ing">+$15</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-home-bar"></div>
+      </div>
+      <div class="phone-dots-row" id="phone-dots-row">
+        <span class="pd active" onclick="goToScreen(0)"></span>
+        <span class="pd" onclick="goToScreen(1)"></span>
+        <span class="pd" onclick="goToScreen(2)"></span>
+        <span class="pd" onclick="goToScreen(3)"></span>
+      </div>
+      <div class="phone-screen-labels">
+        <span class="phone-screen-label active" onclick="goToScreen(0)" id="lbl-0">Dashboard</span>
+        <span class="phone-screen-label" onclick="goToScreen(1)" id="lbl-1">Reservas</span>
+        <span class="phone-screen-label" onclick="goToScreen(2)" id="lbl-2">Nueva Reserva</span>
+        <span class="phone-screen-label" onclick="goToScreen(3)" id="lbl-3">Caja</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ SOCIAL PROOF STRIP ════════════════════════════════════ -->
+<div class="proof-strip">
+  <div class="proof-item">
+    <div class="proof-num">2,400+</div>
+    <div class="proof-label">Hostels activos</div>
+  </div>
+  <div class="proof-divider"></div>
+  <div class="proof-item">
+    <div class="proof-num">98%</div>
+    <div class="proof-label">Satisfacción</div>
+  </div>
+  <div class="proof-divider"></div>
+  <div class="proof-item">
+    <div class="proof-num">24/7</div>
+    <div class="proof-label">Soporte en español</div>
+  </div>
+</div>
+
+<!-- ══ BENEFICIOS DIFERENCIADORES ════════════════════════════ -->
+<section class="benefits-section" id="beneficios">
+  <div class="container">
+    <div class="text-center">
+      <div class="section-eyebrow">Diferenciadores</div>
+      <h2 class="section-title">6 razones para elegir Zuquix</h2>
+      <p class="section-sub mx-auto">Diseñado específicamente para los hostels de LATAM.</p>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">🏨</span>
+        <h4>Multi-hostel</h4>
+        <p class="benefit-desc">Maneja múltiples propiedades desde una sola cuenta. Reportes consolidados y caja separada por hostel.</p>
+        <span class="benefit-badge">Plan Pro</span>
+      </div>
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">🔗</span>
+        <h4>Integración OTA</h4>
+        <p class="benefit-desc">Booking.com, Expedia, Hostelworld, Airbnb sincronizados en tiempo real. Cero overbooking.</p>
+        <span class="benefit-badge">Plan Starter+</span>
+      </div>
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">💰</span>
+        <h4>Caja en tiempo real</h4>
+        <p class="benefit-desc">Control financiero del turno al instante. Efectivo, tarjeta y transferencia en un panel único.</p>
+        <span class="benefit-badge">Todos los planes</span>
+      </div>
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">📶</span>
+        <h4>Modo offline</h4>
+        <p class="benefit-desc">Funciona sin internet. Sincroniza automáticamente al reconectar. Ideal para el Caribe e islas.</p>
+        <span class="benefit-badge">Próximo Q3 2026</span>
+      </div>
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">🌎</span>
+        <h4>Zona horaria automática</h4>
+        <p class="benefit-desc">Detecta tu país y ajusta todos los horarios automáticamente. Sin confusiones de UTC.</p>
+        <span class="benefit-badge">Todos los planes</span>
+      </div>
+      <div class="benefit-card animate-in">
+        <span class="benefit-emoji">👥</span>
+        <h4>Roles de equipo</h4>
+        <p class="benefit-desc">Recepción, housekeeping, administración con permisos granulares. Control total de accesos.</p>
+        <span class="benefit-badge">Todos los planes</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TESTIMONIALS ════════════════════════════════════════ -->
+<section class="testimonials-section" id="testimonials">
+  <div class="container">
+    <div class="text-center">
+      <div class="section-eyebrow">Testimonios</div>
+      <h2 class="section-title">Lo que dicen nuestros hostels</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="tcard animate-in">
+        <div class="stars">★★★★★</div>
+        <p class="quote">"Zuquix me ahorró horas de trabajo manual. La caja cuadra perfectamente al cierre del turno."</p>
+        <div class="tcard-author">
+          <div class="tcard-avatar" style="background:#0d9488;">MG</div>
+          <div>
+            <div class="tcard-name">María González</div>
+            <div class="tcard-meta">Hostel El Viajero, Medellín, Colombia</div>
+          </div>
+        </div>
+      </div>
+      <div class="tcard animate-in">
+        <div class="stars">★★★★★</div>
+        <p class="quote">"En 8 meses de usar Zuquix, cero problemas de overbooking. La sincronización con Booking funciona perfectamente."</p>
+        <div class="tcard-author">
+          <div class="tcard-avatar" style="background:#7c3aed;">CR</div>
+          <div>
+            <div class="tcard-name">Carlos Ramírez</div>
+            <div class="tcard-meta">The Backpacker Inn, Buenos Aires, Argentina</div>
+          </div>
+        </div>
+      </div>
+      <div class="tcard animate-in">
+        <div class="stars">★★★★★</div>
+        <p class="quote">"Tengo 2 hosteles y Zuquix me permite monitorear ambos desde el teléfono. Excelente para dueños remotos."</p>
+        <div class="tcard-author">
+          <div class="tcard-avatar" style="background:#d97706;">AP</div>
+          <div>
+            <div class="tcard-name">Ana Lucia Pereira</div>
+            <div class="tcard-meta">Casa Roots Hostel, Florianópolis, Brasil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ═════════════════════════════════════════════ -->
+<section class="pricing-section" id="pricing">
+  <div class="container text-center">
+    <div class="section-eyebrow">Planes y precios</div>
+    <h2 class="section-title">Zuquix cuesta menos que una noche en tu hostel</h2>
+    <p class="section-sub mx-auto">Y te ahorra docenas de noches al mes en tiempo de operación.</p>
+
+    <div class="pricing-headline">
+      💡 La mayoría de hostels recuperan el costo del plan en la primera reserva evitada por overbooking
+    </div>
+
+    <div class="pricing-grid">
+      <div class="pc animate-in">
+        <div class="pc-name">Free</div>
+        <div class="pc-price-wrap">
+          <div class="pc-price"><sup>$</sup>0</div>
+          <div class="pc-period">/ mes</div>
+        </div>
+        <div class="pc-desc">Para explorar la plataforma y configurar tu hostel.</div>
+        <ul class="pc-features">
+          <li>1 propiedad · hasta 10 camas</li>
+          <li>Dashboard y gestión de reservas</li>
+          <li>Caja registradora básica</li>
+          <li>App móvil incluida</li>
+          <li class="na">Sincronización OTA</li>
+          <li class="na">Reportes financieros avanzados</li>
+          <li class="na">Soporte prioritario</li>
+        </ul>
+        <button class="pc-btn pc-btn-outline" onclick="scrollToId('cta')">Empezar gratis</button>
+      </div>
+
+      <div class="pc featured animate-in">
+        <div class="pc-badge">⭐ Más popular</div>
+        <div class="pc-name">Starter</div>
+        <div class="pc-price-wrap">
+          <div class="pc-price"><sup>$</sup>29</div>
+          <div class="pc-period">/ mes</div>
+        </div>
+        <div class="pc-desc">Para hostels en operación que quieren dejar el Excel.</div>
+        <ul class="pc-features">
+          <li>1 propiedad · camas ilimitadas</li>
+          <li>Todo lo del plan Free</li>
+          <li>Sincronización con Booking.com + Airbnb</li>
+          <li>Reportes financieros completos</li>
+          <li>Gestión de equipo y turnos</li>
+          <li>Exportación a Excel en 1 clic</li>
+          <li>Soporte por chat en 4 horas</li>
+        </ul>
+        <button class="pc-btn pc-btn-primary" onclick="scrollToId('cta')">Empezar prueba 14 días →</button>
+      </div>
+
+      <div class="pc animate-in">
+        <div class="pc-name">Pro</div>
+        <div class="pc-price-wrap">
+          <div class="pc-price"><sup>$</sup>79</div>
+          <div class="pc-period">/ mes</div>
+        </div>
+        <div class="pc-desc">Para cadenas y grupos con múltiples propiedades.</div>
+        <ul class="pc-features">
+          <li>Hasta 5 hostels en un panel</li>
+          <li>Todo lo del plan Starter</li>
+          <li>Panel de control unificado</li>
+          <li>Reportes consolidados por propiedad</li>
+          <li>Roles y permisos avanzados</li>
+          <li>API para integraciones custom</li>
+          <li>Soporte prioritario 24/7</li>
+        </ul>
+        <button class="pc-btn pc-btn-outline" onclick="scrollToId('cta')">Hablar con ventas</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FAQ ═════════════════════════════════════════════════ -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="text-center">
+      <div class="section-eyebrow">Preguntas frecuentes</div>
+      <h2 class="section-title">Todo lo que necesitas saber</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Necesito tarjeta de crédito para el plan gratuito? <span class="faq-icon">+</span></div>
+        <div class="faq-a">No. El plan Free no requiere tarjeta de crédito ni datos de pago. Configura tu hostel completamente gratis.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Puedo cambiar de plan en cualquier momento? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Sí. Puedes hacer upgrade o downgrade en cualquier momento. La facturación se ajusta proporcionalmente.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Funciona en cualquier dispositivo? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Sí. Zuquix es web (desktop) y tiene app móvil para iOS y Android. Funciona igual en cualquier dispositivo.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Cómo funciona la integración con Booking.com? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Conecta tu cuenta de Booking en 2 minutos. Las reservas se importan automáticamente y la disponibilidad se sincroniza en tiempo real.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Mis datos están seguros? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Totalmente. Usamos encriptación SSL, servidores en LATAM y cumplimos GDPR. Tus datos son tuyos siempre.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Ofrecen capacitación? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Sí. Tenemos tutoriales interactivos en la app y webinars semanales en español. El equipo de soporte también ayuda con la configuración inicial.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Qué pasa si me quedo sin internet? <span class="faq-icon">+</span></div>
+        <div class="faq-a">La app móvil cachea los datos del último uso para que puedas ver información básica. Modo offline completo llega en Q3 2026.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Tienen soporte en español? <span class="faq-icon">+</span></div>
+        <div class="faq-a">Sí, soporte nativo en español. Chat 24/7 para Pro, chat en 4 horas para Starter, y email para Free.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA FINAL ══════════════════════════════════════════ -->
+<section class="cta-section" id="cta">
+  <div style="position:relative;z-index:1;">
+    <div class="hero-badge" style="margin-bottom:20px;justify-content:center;">
+      🌴 Únete a los 2,400+ hostels en LATAM
+    </div>
+    <h2>¿Listo para operar sin caos?</h2>
+    <p>Registra tu hostel en 2 minutos. Sin tarjeta. Sin contrato. Si no te convence en 14 días, te devolvemos cada centavo.</p>
+    <button class="cta-btn" onclick="window.location='demo-app.html'">
+      Registra tu hostel gratis →
+    </button>
+    <p class="cta-microcopy">Sin tarjeta de crédito · Cancela cuando quieras · Soporte en español</p>
+    <div class="cta-trust">
+      <div class="cta-trust-item">🔒 SSL cifrado</div>
+      <div class="cta-trust-item">✅ GDPR compliant</div>
+      <div class="cta-trust-item">🌎 Servidores en LATAM</div>
+      <div class="cta-trust-item">📞 Soporte en español</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand-col">
+      <div class="footer-logo">Zuquix</div>
+      <p>El sistema de gestión para hostels de Latinoamérica. Simple, económico e inteligente.</p>
+      <div class="footer-social">
+        <div class="footer-social-btn" title="Instagram">📷</div>
+        <div class="footer-social-btn" title="WhatsApp">💬</div>
+        <div class="footer-social-btn" title="LinkedIn">💼</div>
+        <div class="footer-social-btn" title="YouTube">▶️</div>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Producto</h4>
+      <a onclick="window.location='demo-app.html'">Ver demo</a>
+      <a onclick="scrollToId('beneficios')">Beneficios</a>
+      <a onclick="scrollToId('pricing')">Precios</a>
+      <a>Integraciones OTA</a>
+      <a>API para developers</a>
+      <a>Changelog</a>
+    </div>
+    <div class="footer-col">
+      <h4>Empresa</h4>
+      <a>Sobre nosotros</a>
+      <a>Blog</a>
+      <a>Casos de éxito</a>
+      <a>Prensa</a>
+      <a>Trabaja con nosotros</a>
+    </div>
+    <div class="footer-col">
+      <h4>Soporte</h4>
+      <a>Centro de ayuda</a>
+      <a>Contacto</a>
+      <a>WhatsApp directo</a>
+      <a>Estado del sistema</a>
+      <a>Privacidad</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Zuquix PMS · Hecho con ❤️ para los hostels de LATAM</span>
+    <div class="footer-status">
+      <span class="footer-status-dot"></span>
+      Todos los sistemas operativos
+    </div>
+    <span><a>Privacidad</a> · <a>Términos</a> · <a>Cookies</a></span>
+  </div>
+</footer>
+
+<script>
+// Smooth scroll
+function scrollToId(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// FAQ toggle
+function toggleFaq(item) {
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// Phone carousel - rotate every 2.5 seconds
+let phoneIdx = 0;
+function goToScreen(idx) {
+  document.querySelectorAll('.pscreen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.pd').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.phone-screen-label').forEach((l,i) => l.classList.toggle('active', i === idx));
+  document.getElementById('ps-' + (idx+1)).classList.add('active');
+  document.querySelectorAll('.pd')[idx].classList.add('active');
+  phoneIdx = idx;
+}
+
+let phoneTimer = setInterval(() => {
+  goToScreen((phoneIdx + 1) % 4);
+}, 2500);
+
+// Reset timer on manual click
+document.querySelectorAll('.pd, .phone-screen-label').forEach(el => {
+  el.addEventListener('click', () => {
+    clearInterval(phoneTimer);
+    phoneTimer = setInterval(() => { goToScreen((phoneIdx + 1) % 4); }, 2500);
+  });
+});
+
+// Intersection Observer for animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+// Nav scroll effect
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.nav');
+  nav.style.borderBottomColor = window.scrollY > 60 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)';
+});
+</script>
+</body>
+</html>
