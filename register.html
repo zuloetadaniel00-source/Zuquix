@@ -378,15 +378,16 @@
                 .single();
             if (hostelError) throw hostelError;
 
+            // The trigger on_auth_user_created already inserted the profile row.
+            // We UPDATE it to set hostel_id and role=admin.
             const { error: profileError } = await window.db
                 .from('profiles')
-                .insert({
-                    id: userId,
-                    email: adminData.email,
+                .update({
                     full_name: adminData.fullName,
                     role: 'admin',
                     hostel_id: hostel.id
-                });
+                })
+                .eq('id', userId);
             if (profileError) throw profileError;
 
             showToast('¡Hostel registrado exitosamente! Redirigiendo...', 'success');
