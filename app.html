@@ -100,6 +100,12 @@
                 </div>
                 <span class="nav-label">Canales</span>
             </button>
+            <button onclick="showUsers()" class="nav-btn admin-only hidden" data-page="users" aria-label="Usuarios">
+                <div class="nav-icon-wrap">
+                    <span class="nav-icon">👥</span>
+                </div>
+                <span class="nav-label">Equipo</span>
+            </button>
         </nav>
 
         <main class="main-content" id="main-content">
@@ -606,6 +612,26 @@
                 </div>
             </div>
 
+            <!-- USUARIOS (solo admin) -->
+            <div id="users-page" class="page hidden">
+                <div style="padding: var(--space-4) var(--space-4) var(--space-2);">
+                    <h3 style="font-size:1.1rem; font-weight:700; color:var(--gray-800); margin:0 0 var(--space-1);">Equipo del hostel</h3>
+                    <p style="font-size:0.8rem; color:var(--gray-500); margin:0;">Gestiona los miembros y sus roles</p>
+                </div>
+
+                <!-- Invitar nuevo usuario -->
+                <div style="padding: 0 var(--space-4) var(--space-4);">
+                    <button onclick="showModal('invite-user-modal')" class="btn btn-primary" style="width:100%;">
+                        + Invitar voluntario por email
+                    </button>
+                </div>
+
+                <!-- Lista de usuarios -->
+                <div id="users-list" style="padding: 0 var(--space-4) var(--space-4); display:flex; flex-direction:column; gap:var(--space-3);">
+                    <p style="color:var(--gray-400); font-size:0.85rem; text-align:center; padding: var(--space-6) 0;">Cargando usuarios...</p>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -921,6 +947,26 @@
             <h3 id="channel-modal-title" style="font-size:1.1rem;font-weight:700;margin:0 0 var(--space-5);"></h3>
             <div id="channel-modal-body"></div>
         </div>
+    </div>
+
+    <!-- Modal Invitar Usuario -->
+    <div id="invite-user-modal" class="modal hidden">
+        <h4>Invitar voluntario</h4>
+        <form id="invite-user-form" onsubmit="handleInviteUser(event)">
+            <div class="form-group">
+                <label>Nombre completo</label>
+                <input type="text" id="invite-name" placeholder="Ana García" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="invite-email" placeholder="ana@email.com" required>
+            </div>
+            <div id="invite-error" style="color:var(--danger,#ef4444);font-size:0.8rem;margin-bottom:var(--space-2);display:none;"></div>
+            <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+                <button type="submit" id="invite-submit-btn" class="btn btn-primary" style="flex:1;">Enviar invitación</button>
+            </div>
+        </form>
     </div>
 
     <!-- Styles for channel cards (injected here to avoid separate CSS file) -->

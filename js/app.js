@@ -292,6 +292,114 @@ function formatDateTime(isoString) {
     }).format(date);
 }
 
+function showUsers() {
+    if (currentProfile?.role !== 'admin') {
+        showToast('No tienes permiso para gestionar usuarios', 'error');
+        return;
+    }
+    document.getElementById('page-title').textContent = 'Equipo';
+    showPage('users-page');
+    setTimeout(() => loadUsers(), 100);
+}
+
+async function loadUsers() {
+    const container = document.getElementById('users-list');
+    if (!container) return;
+
+    const hostelId = await window.getCurrentHostelId();
+    if (!hostelId) {
+        container.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;text-align:center;padding:var(--space-6) 0;">Sin hostel asignado.</p>';
+        return;
+    }
+
+    const { data: users, error } = await db
+        .from('profiles')
+        .select('id, email, full_name, role, is_active')
+        .eq('hostel_id', hostelId)
+        .order('full_name');
+
+    if (error) {
+        container.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;text-align:center;padding:var(--space-6) 0;">Error cargando usuarios.</p>';
+        return;
+    }
+
+    if (!users || users.length === 0) {
+        container.innerHTML = '<p style="color:var(--gray-400);font-size:0.85rem;text-align:center;padding:var(--space-6) 0;">No hay usuarios en este hostel.</p>';
+        return;
+    }
+
+    container.innerHTML = users.map(u => {
+        const isCurrentUser = u.id === currentUser?.id;
+        const isActive = u.is_active !== false;
+        return `
+        <div style="background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);">
+                <div style="min-width:0;">
+                    <p style="margin:0;font-weight:600;font-size:0.95rem;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.full_name || u.email)}</p>
+                    <p style="margin:0;font-size:0.78rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.email)}</p>
+                </div>
+                <span style="flex-shrink:0;padding:2px 10px;border-radius:999px;font-size:0.75rem;font-weight:600;background:${u.role === 'admin' ? 'var(--primary,#6366f1)' : 'var(--gray-200)'};color:${u.role === 'admin' ? '#fff' : 'var(--gray-600)'};">
+                    ${u.role === 'admin' ? 'Admin' : 'Voluntario'}
+                </span>
+            </div>
+            ${!isCurrentUser ? `
+            <div style="display:flex;gap:var(--space-2);">
+                <button onclick="changeUserRole('${u.id}', '${u.role === 'admin' ? 'volunteer' : 'admin'}')" class="btn btn-secondary btn-small" style="flex:1;font-size:0.78rem;">
+                    ${u.role === 'admin' ? 'Hacer voluntario' : 'Hacer admin'}
+                </button>
+                <button onclick="toggleUserActive('${u.id}', ${isActive})" class="btn btn-small" style="flex:1;font-size:0.78rem;background:${isActive ? 'var(--danger-light,#fee2e2)' : 'var(--success-light,#dcfce7)'};color:${isActive ? 'var(--danger,#ef4444)' : 'var(--success,#22c55e)'};">
+                    ${isActive ? 'Desactivar' : 'Activar'}
+                </button>
+            </div>` : '<p style="font-size:0.75rem;color:var(--gray-400);margin:0;">(tú)</p>'}
+        </div>`;
+    }).join('');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function changeUserRole(userId, newRole) {
+    const { error } = await db.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('Error al cambiar rol', 'error'); return; }
+    showToast(`Rol actualizado a ${newRole === 'admin' ? 'Admin' : 'Voluntario'}`, 'success');
+    loadUsers();
+}
+
+async function toggleUserActive(userId, currentlyActive) {
+    const { error } = await db.from('profiles').update({ is_active: !currentlyActive }).eq('id', userId);
+    if (error) { showToast('Error al actualizar usuario', 'error'); return; }
+    showToast(currentlyActive ? 'Usuario desactivado' : 'Usuario activado', 'success');
+    loadUsers();
+}
+
+async function handleInviteUser(e) {
+    e.preventDefault();
+    const name = document.getElementById('invite-name').value.trim();
+    const email = document.getElementById('invite-email').value.trim();
+    const errorDiv = document.getElementById('invite-error');
+    const btn = document.getElementById('invite-submit-btn');
+
+    errorDiv.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        await inviteUserByEmail(email, name);
+        closeModal();
+        document.getElementById('invite-user-form').reset();
+        showToast(`Invitación enviada a ${email}`, 'success');
+        loadUsers();
+    } catch (err) {
+        errorDiv.textContent = err.message || 'Error al enviar la invitación';
+        errorDiv.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar invitación';
+    }
+}
+
 // Expose functions globally
 window.showDashboard = showDashboard;
 window.showReservations = showReservations;
@@ -299,6 +407,7 @@ window.showNewReservation = showNewReservation;
 window.showOperations = showOperations;
 window.showCashRegister = showCashRegister;
 window.showFinances = showFinances;
+window.showUsers = showUsers;
 window.goBack = goBack;
 window.showModal = showModal;
 window.closeModal = closeModal;
@@ -308,3 +417,6 @@ window.esc = esc;
 window.formatDate = formatDate;
 window.formatCurrency = formatCurrency;
 window.formatDateTime = formatDateTime;
+window.changeUserRole = changeUserRole;
+window.toggleUserActive = toggleUserActive;
+window.handleInviteUser = handleInviteUser;
