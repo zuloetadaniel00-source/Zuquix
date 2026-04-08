@@ -619,10 +619,10 @@
                     <p style="font-size:0.8rem; color:var(--gray-500); margin:0;">Gestiona los miembros y sus roles</p>
                 </div>
 
-                <!-- Invitar nuevo usuario -->
+                <!-- Crear nuevo usuario -->
                 <div style="padding: 0 var(--space-4) var(--space-4);">
-                    <button onclick="showModal('invite-user-modal')" class="btn btn-primary" style="width:100%;">
-                        + Invitar voluntario por email
+                    <button onclick="showModal('create-user-modal')" class="btn btn-primary" style="width:100%;">
+                        + Crear usuario
                     </button>
                 </div>
 
@@ -949,22 +949,57 @@
         </div>
     </div>
 
-    <!-- Modal Invitar Usuario -->
-    <div id="invite-user-modal" class="modal hidden">
-        <h4>Invitar voluntario</h4>
-        <form id="invite-user-form" onsubmit="handleInviteUser(event)">
+    <!-- Modal Crear Usuario -->
+    <div id="create-user-modal" class="modal hidden">
+        <h4>Crear usuario</h4>
+        <form id="create-user-form" onsubmit="handleCreateUser(event)">
             <div class="form-group">
                 <label>Nombre completo</label>
-                <input type="text" id="invite-name" placeholder="Ana García" required>
+                <input type="text" id="create-user-name" placeholder="Ana García" required>
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" id="invite-email" placeholder="ana@email.com" required>
+                <input type="email" id="create-user-email" placeholder="ana@email.com" required>
             </div>
-            <div id="invite-error" style="color:var(--danger,#ef4444);font-size:0.8rem;margin-bottom:var(--space-2);display:none;"></div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="create-user-password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label>Rol</label>
+                <select id="create-user-role">
+                    <option value="volunteer">Voluntario</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div id="create-user-error" style="color:var(--danger,#ef4444);font-size:0.8rem;margin-bottom:var(--space-2);display:none;"></div>
             <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
                 <button type="button" onclick="closeModal()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
-                <button type="submit" id="invite-submit-btn" class="btn btn-primary" style="flex:1;">Enviar invitación</button>
+                <button type="submit" id="create-user-submit-btn" class="btn btn-primary" style="flex:1;">Crear usuario</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal Editar Usuario -->
+    <div id="edit-user-modal" class="modal hidden">
+        <h4>Editar usuario</h4>
+        <form id="edit-user-form" onsubmit="handleSaveEditUser(event)">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-group">
+                <label>Nombre completo</label>
+                <input type="text" id="edit-user-name" placeholder="Ana García" required>
+            </div>
+            <div class="form-group">
+                <label>Rol</label>
+                <select id="edit-user-role">
+                    <option value="volunteer">Voluntario</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div id="edit-user-error" style="color:var(--danger,#ef4444);font-size:0.8rem;margin-bottom:var(--space-2);display:none;"></div>
+            <div style="display:flex; gap:var(--space-3); margin-top:var(--space-4);">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+                <button type="submit" id="edit-user-submit-btn" class="btn btn-primary" style="flex:1;">Guardar</button>
             </div>
         </form>
     </div>

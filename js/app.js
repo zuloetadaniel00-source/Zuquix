@@ -330,7 +330,6 @@ async function loadUsers() {
 
     container.innerHTML = users.map(u => {
         const isCurrentUser = u.id === currentUser?.id;
-        const isActive = u.is_active !== false;
         return `
         <div style="background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);">
@@ -342,15 +341,16 @@ async function loadUsers() {
                     ${u.role === 'admin' ? 'Admin' : 'Voluntario'}
                 </span>
             </div>
-            ${!isCurrentUser ? `
-            <div style="display:flex;gap:var(--space-2);">
-                <button onclick="changeUserRole('${u.id}', '${u.role === 'admin' ? 'volunteer' : 'admin'}')" class="btn btn-secondary btn-small" style="flex:1;font-size:0.78rem;">
-                    ${u.role === 'admin' ? 'Hacer voluntario' : 'Hacer admin'}
+            ${isCurrentUser
+                ? '<p style="font-size:0.75rem;color:var(--gray-400);margin:0;">(tú)</p>'
+                : `<div style="display:flex;gap:var(--space-2);">
+                <button onclick="openEditUser('${u.id}', ${JSON.stringify(escapeHtml(u.full_name || ''))},'${u.role}')" class="btn btn-secondary btn-small" style="flex:1;font-size:0.78rem;">
+                    Editar
                 </button>
-                <button onclick="toggleUserActive('${u.id}', ${isActive})" class="btn btn-small" style="flex:1;font-size:0.78rem;background:${isActive ? 'var(--danger-light,#fee2e2)' : 'var(--success-light,#dcfce7)'};color:${isActive ? 'var(--danger,#ef4444)' : 'var(--success,#22c55e)'};">
-                    ${isActive ? 'Desactivar' : 'Activar'}
+                <button onclick="deleteUser('${u.id}', ${JSON.stringify(escapeHtml(u.full_name || u.email))})" class="btn btn-small" style="flex:1;font-size:0.78rem;background:var(--danger-light,#fee2e2);color:var(--danger,#ef4444);">
+                    Eliminar
                 </button>
-            </div>` : '<p style="font-size:0.75rem;color:var(--gray-400);margin:0;">(tú)</p>'}
+            </div>`}
         </div>`;
     }).join('');
 }
@@ -360,44 +360,75 @@ function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function changeUserRole(userId, newRole) {
-    const { error } = await db.from('profiles').update({ role: newRole }).eq('id', userId);
-    if (error) { showToast('Error al cambiar rol', 'error'); return; }
-    showToast(`Rol actualizado a ${newRole === 'admin' ? 'Admin' : 'Voluntario'}`, 'success');
-    loadUsers();
-}
-
-async function toggleUserActive(userId, currentlyActive) {
-    const { error } = await db.from('profiles').update({ is_active: !currentlyActive }).eq('id', userId);
-    if (error) { showToast('Error al actualizar usuario', 'error'); return; }
-    showToast(currentlyActive ? 'Usuario desactivado' : 'Usuario activado', 'success');
-    loadUsers();
-}
-
-async function handleInviteUser(e) {
+async function handleCreateUser(e) {
     e.preventDefault();
-    const name = document.getElementById('invite-name').value.trim();
-    const email = document.getElementById('invite-email').value.trim();
-    const errorDiv = document.getElementById('invite-error');
-    const btn = document.getElementById('invite-submit-btn');
+    const name = document.getElementById('create-user-name').value.trim();
+    const email = document.getElementById('create-user-email').value.trim();
+    const password = document.getElementById('create-user-password').value;
+    const role = document.getElementById('create-user-role').value;
+    const errorDiv = document.getElementById('create-user-error');
+    const btn = document.getElementById('create-user-submit-btn');
 
     errorDiv.style.display = 'none';
     btn.disabled = true;
-    btn.textContent = 'Enviando...';
+    btn.textContent = 'Creando...';
 
     try {
-        await inviteUserByEmail(email, name);
+        await window.createTeamUser({ name, email, password, role });
         closeModal();
-        document.getElementById('invite-user-form').reset();
-        showToast(`Invitación enviada a ${email}`, 'success');
+        document.getElementById('create-user-form').reset();
+        showToast(`Usuario ${name} creado correctamente`, 'success');
         loadUsers();
     } catch (err) {
-        errorDiv.textContent = err.message || 'Error al enviar la invitación';
+        errorDiv.textContent = err.message || 'Error al crear el usuario';
         errorDiv.style.display = 'block';
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Enviar invitación';
+        btn.textContent = 'Crear usuario';
     }
+}
+
+function openEditUser(userId, fullName, role) {
+    document.getElementById('edit-user-id').value = userId;
+    document.getElementById('edit-user-name').value = fullName;
+    document.getElementById('edit-user-role').value = role;
+    document.getElementById('edit-user-error').style.display = 'none';
+    showModal('edit-user-modal');
+}
+
+async function handleSaveEditUser(e) {
+    e.preventDefault();
+    const userId = document.getElementById('edit-user-id').value;
+    const name = document.getElementById('edit-user-name').value.trim();
+    const role = document.getElementById('edit-user-role').value;
+    const errorDiv = document.getElementById('edit-user-error');
+    const btn = document.getElementById('edit-user-submit-btn');
+
+    errorDiv.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+        const { error } = await db.from('profiles').update({ full_name: name, role }).eq('id', userId);
+        if (error) throw error;
+        closeModal();
+        showToast('Usuario actualizado', 'success');
+        loadUsers();
+    } catch (err) {
+        errorDiv.textContent = err.message || 'Error al actualizar el usuario';
+        errorDiv.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar';
+    }
+}
+
+async function deleteUser(userId, displayName) {
+    if (!confirm(`¿Eliminar a ${displayName} del equipo?`)) return;
+    const { error } = await db.from('profiles').delete().eq('id', userId);
+    if (error) { showToast('Error al eliminar usuario', 'error'); return; }
+    showToast('Usuario eliminado', 'success');
+    loadUsers();
 }
 
 // Expose functions globally
@@ -417,6 +448,7 @@ window.esc = esc;
 window.formatDate = formatDate;
 window.formatCurrency = formatCurrency;
 window.formatDateTime = formatDateTime;
-window.changeUserRole = changeUserRole;
-window.toggleUserActive = toggleUserActive;
-window.handleInviteUser = handleInviteUser;
+window.handleCreateUser = handleCreateUser;
+window.openEditUser = openEditUser;
+window.handleSaveEditUser = handleSaveEditUser;
+window.deleteUser = deleteUser;

@@ -217,55 +217,37 @@ window.registerHostel = async function(hostelData, adminData) {
 };
 
 // =====================================================
-// INVITAR USUARIO AL HOSTEL
+// CREAR USUARIO EN EL HOSTEL
 // =====================================================
 
-window.inviteUserByEmail = async function(email, fullName) {
+window.createTeamUser = async function({ name, email, password, role }) {
     const hostelId = await window.getCurrentHostelId();
     if (!hostelId) throw new Error('No se encontró el hostel del administrador');
 
-    // inviteUserByEmail requiere service_role key en el servidor.
-    // Desde el cliente con anon key usamos signUp sin contraseña (magic link flow),
-    // o delegamos a una Edge Function. Aquí usamos el método disponible en el cliente:
-    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
-        data: {
-            full_name: fullName,
-            hostel_id: hostelId,
-            role: 'volunteer'
-        },
-        redirectTo: window.location.origin + '/app.html'
+    // 1. Crear usuario en Supabase Auth
+    const { data, error: signUpError } = await db.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } }
     });
 
-    if (error) {
-        // Fallback: si no hay permisos de admin, intentar signUp
-        if (error.status === 403 || error.message?.includes('not allowed')) {
-            const { error: signUpError } = await db.auth.signUp({
-                email,
-                password: crypto.randomUUID(),
-                options: {
-                    data: { full_name: fullName },
-                    emailRedirectTo: window.location.origin + '/app.html'
-                }
-            });
-            if (signUpError) throw new Error(signUpError.message);
+    if (signUpError) throw new Error(signUpError.message);
 
-            // Registrar en profiles con el hostel correcto
-            // El trigger de Supabase o la Edge Function deberá completar esto.
-            // Guardamos la intención en una tabla pending_invites si existe.
-            return;
-        }
-        throw new Error(error.message);
-    }
+    const userId = data?.user?.id;
+    if (!userId) throw new Error('No se pudo obtener el ID del nuevo usuario');
 
-    // Si el usuario fue creado, vincular al hostel
-    if (data?.user) {
-        await db.from('profiles').upsert({
-            id: data.user.id,
-            email,
-            full_name: fullName,
-            role: 'volunteer',
-            hostel_id: hostelId
-        }, { onConflict: 'id' });
+    // 2. Vincular perfil al hostel con el rol indicado
+    const { error: profileError } = await db
+        .from('profiles')
+        .update({ full_name: name, role, hostel_id: hostelId })
+        .eq('id', userId);
+
+    if (profileError) {
+        // Si el trigger aún no creó el perfil, intentar upsert
+        const { error: upsertError } = await db
+            .from('profiles')
+            .upsert({ id: userId, email, full_name: name, role, hostel_id: hostelId }, { onConflict: 'id' });
+        if (upsertError) throw new Error(upsertError.message);
     }
 };
 
