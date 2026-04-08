@@ -235,7 +235,8 @@ window.createTeamUser = async function({ name, email, password, role }) {
     if (!hostelId) throw new Error('No se encontró el hostel del administrador');
 
     // 1. Crear usuario con la Admin API: email ya confirmado, sin email de verificación
-    //    Requiere que SUPABASE_SERVICE_KEY esté configurado en supabase-config.js
+    //    adminDb se inicializa de forma asíncrona desde /api/config (Vercel env var)
+    const adminDb = await window.adminDbReady;
     const { data, error: createError } = await adminDb.auth.admin.createUser({
         email,
         password,
