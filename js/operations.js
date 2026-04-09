@@ -1,222 +1,205 @@
 // =====================================================
-// OPERACIONES / TAREAS
-// Premium UX Edition
+// OPERACIONES / TAREAS - CON TIPO "LAUNDRY"
+// Zuquix PMS - Adaptado del HTML de referencia
 // =====================================================
 
-async function loadTasks() {
-    const list = document.getElementById('tasks-list');
-    if (!list) return;
+let tareasFilter = 'todas';
+let openTaskMenu = null;
+
+// =====================================================
+// RENDER PRINCIPAL DE TAREAS
+// =====================================================
+
+function renderTareas() {
+    const c = document.getElementById('page-content');
+    const pending = typeof tasks !== 'undefined' ? tasks.filter(t=>!t.done).length : 0;
+    const done = typeof tasks !== 'undefined' ? tasks.filter(t=>t.done).length : 0;
     
-    // Show loading skeletons
-    list.innerHTML = `
-        <div class="skeleton" style="height: 120px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 120px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 120px; border-radius: var(--radius-lg);"></div>
-    `;
+    let list = typeof tasks !== 'undefined' ? tasks : [];
+    if(tareasFilter==='pendientes') list=list.filter(t=>!t.done);
+    else if(tareasFilter==='completadas') list=list.filter(t=>t.done);
+    else if(tareasFilter==='laundry') list=list.filter(t=>t.type==='laundry' && !t.done);
     
-    try {
-        const { data: tasks, error } = await db
-            .from('tasks')
-            .select('*, room:room_id(number, name), assigned:assigned_to(full_name)')
-            .eq('status', 'pending')
-            .order('priority', { ascending: false })
-            .order('due_date');
-            
-        if (error) throw error;
-        
-        const isAdmin = currentProfile?.role === 'admin';
+    c.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="filter-tabs" style="margin:0">
+        <div class="filter-tab ${tareasFilter==='todas'?'active':''}" onclick="setTareasFilter('todas')">Todas</div>
+        <div class="filter-tab ${tareasFilter==='pendientes'?'active':''}" onclick="setTareasFilter('pendientes')">Pendientes <span style="background:var(--amber);color:#1a1a1a;border-radius:999px;padding:0 5px;font-size:0.65rem;font-weight:700">${pending}</span></div>
+        <div class="filter-tab ${tareasFilter==='laundry'?'active':''}" onclick="setTareasFilter('laundry')">Lavandería</div>
+        <div class="filter-tab ${tareasFilter==='completadas'?'active':''}" onclick="setTareasFilter('completadas')">Completadas <span style="opacity:0.6">${done}</span></div>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="openNewTaskModal()">+ Nueva tarea</button>
+    </div>
+    <div id="tasks-list">
+      ${list.map(t=>renderTaskItem(t)).join('')}
+    </div>`;
+}
 
-        // Add button visible only for admin
-        const addBtnContainer = document.getElementById('add-task-btn-container');
-        if (addBtnContainer) {
-            addBtnContainer.innerHTML = isAdmin
-                ? `<button onclick="showAddTaskModal()" class="btn btn-primary btn-small">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    Agregar
-                   </button>`
-                : '';
+function renderTaskItem(t) {
+    const isLaundry = t.type === 'laundry';
+    return `<div class="task-item ${t.done?'done':''} ${isLaundry?'task-laundry':''}" id="task-${t.id}">
+    <div class="task-checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})">
+      ${t.done?'✓':''}
+    </div>
+    <div class="task-info">
+      <div class="task-title">${t.title}</div>
+      <div class="task-sub">👤 ${t.assigned} · 🕐 ${t.time} · 📍 ${t.location}${isLaundry && t.amount ? ' · 💵 $'+t.amount : ''}</div>
+    </div>
+    ${priorityBadge(t.done?'hecho':t.priority)}
+    <button class="task-menu-btn" onclick="toggleTaskMenu(event,${t.id})">···</button>
+    <div class="task-menu-dropdown" id="tmenu-${t.id}" style="display:none">
+      <div class="task-menu-opt" onclick="openEditTaskModal(${t.id})">✏ Editar</div>
+      <div class="task-menu-opt del" onclick="deleteTask(${t.id})">🗑 Eliminar</div>
+    </div>
+  </div>`;
+}
+
+function priorityBadge(p) {
+    if(p==='urgente') return '<span class="badge badge-red">Urgente</span>';
+    if(p==='medio') return '<span class="badge badge-amber">Medio</span>';
+    if(p==='hecho') return '<span class="badge badge-accent">Hecho</span>';
+    return `<span class="badge badge-gray">${p}</span>`;
+}
+
+function toggleTask(id) {
+    const t = typeof tasks !== 'undefined' ? tasks.find(x=>x.id===id) : null;
+    if(t){ 
+        t.done=!t.done; 
+        t.priority=t.done?'hecho':t._prevPriority||'medio'; 
+        if(!t.done&&t._prevPriority) t.priority=t._prevPriority; 
+        if(!t.done) t._prevPriority=t.priority; 
+    }
+    updateTaskBadge(); 
+    renderTareas();
+}
+
+function toggleTaskMenu(e, id) {
+    e.stopPropagation();
+    const el=document.getElementById('tmenu-'+id);
+    if(!el) return;
+    const wasOpen=el.style.display!=='none';
+    document.querySelectorAll('.task-menu-dropdown').forEach(d=>d.style.display='none');
+    el.style.display=wasOpen?'none':'block';
+}
+
+// Cerrar menús al hacer clic fuera
+document.addEventListener('click',()=>{
+    document.querySelectorAll('.task-menu-dropdown').forEach(d=>d.style.display='none');
+});
+
+function deleteTask(id) {
+    if(confirm('¿Eliminar esta tarea?')){
+        if (typeof tasks !== 'undefined') {
+            tasks=tasks.filter(t=>t.id!==id);
         }
-        
-        if (!tasks?.length) {
-            list.innerHTML = `
-                <div style="text-align: center; padding: var(--space-10) var(--space-4); color: var(--gray-400);">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-3);">🎉</div>
-                    <div style="font-weight: 600;">Sin tareas pendientes</div>
-                    <div style="font-size: 0.875rem; margin-top: var(--space-2);">¡Todo está al día!</div>
-                </div>
-            `;
-            loadCleaningHistory();
-            loadReports();
-            return;
-        }
-        
-        list.innerHTML = tasks.map((t, index) => `
-            <div class="task-card priority-${t.priority}" style="animation-delay: ${index * 0.05}s;">
-                <div class="task-header">
-                    <span class="task-title">${esc(t.title)}</span>
-                    <span class="task-room">${esc(t.room?.name || '')}</span>
-                </div>
-                ${t.description ? `<p class="task-description">${esc(t.description)}</p>` : ''}
-                <div class="task-meta">
-                    <span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        ${esc(t.assigned_to_name || t.assigned?.full_name || 'Sin asignar')}
-                    </span>
-                    <span style="text-transform: capitalize;">${esc(t.priority)}</span>
-                </div>
-                <div class="task-actions">
-                    <button onclick="showCompleteTaskModal('${t.id}')" class="btn btn-success btn-small">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                            <path d="M20 6L9 17l-5-5"/>
-                        </svg>
-                        Completar
-                    </button>
-                    ${isAdmin ? `
-                        <button onclick="deleteTask('${t.id}')" class="btn btn-danger btn-small">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Eliminar
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
-
-        loadCleaningHistory();
-        loadReports();
-        
-    } catch (err) {
-        console.error('Error tareas:', err);
-        list.innerHTML = '<p class="text-muted">Error al cargar tareas</p>';
+        updateTaskBadge(); 
+        renderTareas(); 
     }
 }
 
-function showAddTaskModal() {
-    const modal = document.getElementById('add-task-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
+function setTareasFilter(f){ 
+    tareasFilter=f; 
+    renderTareas(); 
 }
 
-function closeAddTaskModal() {
-    const modal = document.getElementById('add-task-modal');
-    if (modal) {
-        modal.style.animation = 'slideDownModal 0.3s ease forwards';
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.style.animation = '';
-            document.body.style.overflow = '';
-        }, 300);
-    }
-    document.getElementById('add-task-form')?.reset();
+function updateTaskBadge() {
+    const n = typeof tasks !== 'undefined' ? tasks.filter(t=>!t.done).length : 0;
+    const badge=document.getElementById('tareas-badge');
+    if(badge) badge.textContent=n;
 }
 
-async function saveNewTask() {
-    const title       = document.getElementById('new-task-title')?.value?.trim();
-    const description = document.getElementById('new-task-description')?.value?.trim() || null;
-    const assignedTo  = document.getElementById('new-task-assigned')?.value?.trim();
+// =====================================================
+// NUEVA TAREA CON TIPO
+// =====================================================
 
-    const priorityRaw = document.getElementById('new-task-priority')?.value || 'medium';
-    const priorityMap = {
-        'low': 'low', 'medium': 'medium', 'high': 'high',
-        'baja': 'low', 'media': 'medium', 'alta': 'high',
-        'bajo': 'low', 'medio': 'medium', 'alto': 'high'
+function openNewTaskModal(prefill) {
+    openModal(prefill?'Editar tarea':'Nueva tarea',
+        `<div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="tk-title" value="${prefill?.title||''}"></div>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Asignar a</label><select class="form-select" id="tk-assign">
+         <option ${prefill?.assigned==='Sin asignar'?'selected':''}>Sin asignar</option>
+         ${typeof team !== 'undefined' ? team.map(m=>`<option ${prefill?.assigned===m.name?'selected':''}>${m.name}</option>`).join('') : ''}
+       </select></div>
+       <div class="form-group"><label class="form-label">Hora</label><input class="form-input" id="tk-time" type="time" value="${prefill?.time?.replace(' AM','').replace(' PM','')||''}"></div>
+     </div>
+     <div class="form-group"><label class="form-label">Ubicación</label><input class="form-input" id="tk-loc" value="${prefill?.location||''}"></div>
+     
+     <!-- NUEVO: Selector de tipo -->
+     <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="tk-type" onchange="toggleTaskType()">
+       <option value="housekeeping" ${prefill?.type==='housekeeping'||!prefill?'selected':''}>Housekeeping</option>
+       <option value="maintenance" ${prefill?.type==='maintenance'?'selected':''}>Mantenimiento</option>
+       <option value="laundry" ${prefill?.type==='laundry'?'selected':''}>Lavandería</option>
+       <option value="otros" ${prefill?.type==='otros'?'selected':''}>Otros</option>
+     </select></div>
+     
+     <!-- Campos específicos para laundry -->
+     <div id="laundry-fields" style="display:${prefill?.type==='laundry'?'block':'none'};">
+       <div class="form-row">
+         <div class="form-group"><label class="form-label">Nombre huésped</label><input class="form-input" id="tk-guest" value="${prefill?.guestName||''}"></div>
+         <div class="form-group"><label class="form-label">Monto ($)</label><input class="form-input" id="tk-amount" type="number" value="${prefill?.amount||''}"></div>
+       </div>
+       <div class="form-group"><label class="form-label">Habitación</label><input class="form-input" id="tk-room" value="${prefill?.room||''}"></div>
+     </div>
+     
+     <div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="tk-priority">
+       <option value="urgente" ${prefill?.priority==='urgente'?'selected':''}>Urgente</option>
+       <option value="medio" ${prefill?.priority==='medio'||!prefill?'selected':''}>Medio</option>
+       <option value="bajo" ${prefill?.priority==='bajo'?'selected':''}>Bajo</option>
+     </select></div>`,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveTask(${prefill?.id||'null'})">Guardar</button>`
+    );
+}
+
+function toggleTaskType() {
+    const type = document.getElementById('tk-type').value;
+    document.getElementById('laundry-fields').style.display = type === 'laundry' ? 'block' : 'none';
+}
+
+function openEditTaskModal(id){ 
+    const t = typeof tasks !== 'undefined' ? tasks.find(t=>t.id===id) : null;
+    openNewTaskModal(t); 
+}
+
+function saveTask(id) {
+    const title=document.getElementById('tk-title').value;
+    if(!title){ showToast('El título es requerido','error'); return; }
+    
+    const type = document.getElementById('tk-type').value;
+    const newTask = {
+        id: id&&id!=='null' ? id : Date.now(),
+        title,
+        assigned:document.getElementById('tk-assign').value,
+        time:document.getElementById('tk-time').value,
+        location:document.getElementById('tk-loc').value,
+        type: type,
+        priority:document.getElementById('tk-priority').value,
+        done: id&&id!=='null' ? (typeof tasks !== 'undefined' ? tasks.find(t=>t.id===id)?.done : false) : false
     };
-    const priority = priorityMap[priorityRaw.toLowerCase()] || 'medium';
-    const taskType = document.getElementById('new-task-type')?.value || 'cleaning_daily';
-
-    if (!title || !assignedTo) {
-        showToast('Título y "Asignado a" son obligatorios', 'error');
-        return;
+    
+    // Campos específicos para laundry
+    if(type === 'laundry') {
+        newTask.guestName = document.getElementById('tk-guest').value;
+        newTask.amount = parseFloat(document.getElementById('tk-amount').value) || 0;
+        newTask.room = document.getElementById('tk-room').value;
     }
-
-    try {
-        const { error } = await db.from('tasks').insert([{
-            title,
-            description,
-            room_id: null,
-            assigned_to_name: assignedTo,
-            priority,
-            status: 'pending',
-            type: taskType,
-            due_date: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            created_by: currentUser.id
-        }]);
-
-        if (error) throw error;
-        showToast('✅ Tarea creada exitosamente', 'success');
-        closeAddTaskModal();
-        loadTasks();
-    } catch (err) {
-        console.error('Error creando tarea:', err);
-        showToast('Error: ' + err.message, 'error');
+    
+    if(id&&id!=='null') {
+        const idx = typeof tasks !== 'undefined' ? tasks.findIndex(t=>t.id===id) : -1;
+        if(idx >= 0 && typeof tasks !== 'undefined') tasks[idx] = {...tasks[idx], ...newTask};
+    } else {
+        if (typeof tasks !== 'undefined') tasks.push(newTask);
     }
+    
+    closeModal(); 
+    updateTaskBadge(); 
+    renderTareas(); 
+    showToast('✓ Tarea guardada');
 }
 
-let pendingCompleteTaskId = null;
-
-function showCompleteTaskModal(taskId) {
-    pendingCompleteTaskId = taskId;
-    const modal = document.getElementById('complete-task-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    const input = document.getElementById('completed-by-name');
-    if (input) { 
-        input.value = ''; 
-        setTimeout(() => input.focus(), 100);
-    }
-}
-
-function closeCompleteTaskModal() {
-    const modal = document.getElementById('complete-task-modal');
-    if (modal) {
-        modal.style.animation = 'slideDownModal 0.3s ease forwards';
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.style.animation = '';
-            document.body.style.overflow = '';
-        }, 300);
-    }
-    const input = document.getElementById('completed-by-name');
-    if (input) input.value = '';
-    pendingCompleteTaskId = null;
-}
-
-async function confirmCompleteTask() {
-    const completedByName = document.getElementById('completed-by-name')?.value?.trim();
-    if (!completedByName) {
-        showToast('Ingresa el nombre de quien realizó la tarea', 'error');
-        return;
-    }
-
-    try {
-        const { error } = await db.from('tasks').update({
-            status: 'completed',
-            completed_by_name: completedByName,
-            completed_at: new Date().toISOString(),
-            completed_by: currentUser.id
-        }).eq('id', pendingCompleteTaskId);
-
-        if (error) throw error;
-        showToast('✅ Tarea completada', 'success');
-        closeCompleteTaskModal();
-        loadTasks();
-    } catch (err) {
-        console.error('Error completando tarea:', err);
-        showToast('Error: ' + err.message, 'error');
-    }
-}
+// =====================================================
+// HISTORIAL DE LIMPIEZA (ADMIN)
+// =====================================================
 
 async function loadCleaningHistory() {
     const section = document.getElementById('cleaning-history-section');
@@ -229,11 +212,7 @@ async function loadCleaningHistory() {
     const list = document.getElementById('cleaning-history-list');
     if (!list) return;
     
-    list.innerHTML = `
-        <div class="skeleton" style="height: 70px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 70px; border-radius: var(--radius-lg);"></div>
-    `;
-
+    // Cargar desde Supabase o datos locales
     try {
         const { data: completed, error } = await db
             .from('tasks')
@@ -256,24 +235,13 @@ async function loadCleaningHistory() {
             return `
                 <div class="cleaning-history-card" style="animation-delay: ${index * 0.03}s;">
                     <div class="cleaning-history-title">
-                        <span>🛏️</span>
+                        <span>${t.type === 'laundry' ? '🧺' : '🛏️'}</span>
                         ${esc(t.title)}
                     </div>
                     <div class="cleaning-history-meta">
-                        <span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            ${esc(t.completed_by_name || 'Desconocido')}
-                        </span>
-                        <span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            ${esc(completedAt)}
-                        </span>
+                        <span>👤 ${esc(t.completed_by_name || 'Desconocido')}</span>
+                        <span>🕐 ${esc(completedAt)}</span>
+                        ${t.amount ? `<span>💵 $${t.amount}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -285,28 +253,14 @@ async function loadCleaningHistory() {
     }
 }
 
-async function deleteTask(id) {
-    if (!confirm('⚠️ ¿Eliminar esta tarea permanentemente?')) return;
-    try {
-        const { error } = await db.from('tasks').delete().eq('id', id);
-        if (error) throw error;
-        showToast('Tarea eliminada', 'success');
-        loadTasks();
-    } catch (err) {
-        console.error('Error deleting task:', err);
-        showToast('Error al eliminar: ' + err.message, 'error');
-    }
-}
+// =====================================================
+// REPORTES
+// =====================================================
 
 async function loadReports() {
     const container = document.getElementById('reports-list');
     if (!container) return;
     
-    container.innerHTML = `
-        <div class="skeleton" style="height: 150px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 150px; border-radius: var(--radius-lg);"></div>
-    `;
-
     const isAdmin = currentProfile?.role === 'admin';
 
     try {
@@ -323,7 +277,6 @@ async function loadReports() {
                 <div style="text-align: center; padding: var(--space-10) var(--space-4); color: var(--gray-400);">
                     <div style="font-size: 3rem; margin-bottom: var(--space-3);">📋</div>
                     <div style="font-weight: 600;">No hay reportes abiertos</div>
-                    <div style="font-size: 0.875rem; margin-top: var(--space-2);">Todo está funcionando correctamente</div>
                 </div>
             `;
             return;
@@ -342,144 +295,5 @@ async function loadReports() {
             return `
                 <div class="report-card" style="border-left-color: ${color}; background: linear-gradient(135deg, ${bg} 0%, var(--surface) 100%); animation-delay: ${index * 0.05}s;">
                     <div class="report-header">
-                        <span style="color:${color}; font-weight:700; font-size:0.875rem; display: flex; align-items: center; gap: var(--space-2);">
-                            ${label}
-                        </span>
-                        <span style="font-size:0.75rem; color:var(--gray-400); font-weight: 500;">${esc(fecha)}</span>
-                    </div>
-                    <div style="font-weight:700; margin: var(--space-2) 0; font-size: 1rem; color: var(--gray-900);">${esc(r.title)}</div>
-                    <div style="font-size:0.875rem; color:var(--gray-600); margin-bottom:var(--space-4); line-height: 1.5;">${esc(r.description)}</div>
-                    ${r.photo_url ? `<img src="${esc(r.photo_url)}" alt="Foto del reporte" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius-lg); margin-bottom: var(--space-4); box-shadow: var(--shadow-sm);">` : ''}
-                    ${isAdmin ? `
-                        <button onclick="markReportDone('${r.id}')" class="btn btn-success btn-small">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                                <path d="M20 6L9 17l-5-5"/>
-                            </svg>
-                            Completado
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-
-    } catch (err) {
-        console.error('Error reportes:', err);
-        container.innerHTML = '<p class="text-muted">Error al cargar reportes</p>';
-    }
-}
-
-function showAddReportModal() {
-    const modal = document.getElementById('add-report-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeAddReportModal() {
-    const modal = document.getElementById('add-report-modal');
-    if (modal) {
-        modal.style.animation = 'slideDownModal 0.3s ease forwards';
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.style.animation = '';
-            document.body.style.overflow = '';
-        }, 300);
-    }
-    document.getElementById('add-report-form')?.reset();
-    const preview = document.getElementById('report-photo-preview');
-    if (preview) {
-        preview.src = '';
-        preview.classList.add('hidden');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('report-photo')?.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const preview = document.getElementById('report-photo-preview');
-            if (preview) {
-                preview.src = ev.target.result;
-                preview.classList.remove('hidden');
-                preview.style.animation = 'fadeIn 0.3s ease';
-            }
-        };
-        reader.readAsDataURL(file);
-    });
-});
-
-async function saveNewReport() {
-    const title       = document.getElementById('report-title')?.value?.trim();
-    const description = document.getElementById('report-description')?.value?.trim();
-    const urgency     = document.querySelector('input[name="report-urgency"]:checked')?.value;
-    const photoFile   = document.getElementById('report-photo')?.files[0];
-
-    if (!title || !description || !urgency) {
-        showToast('Completa todos los campos obligatorios', 'error');
-        return;
-    }
-
-    try {
-        let photoUrl = null;
-        if (photoFile) {
-            const fileName = `reports/${Date.now()}_${photoFile.name}`;
-            const { error: uploadError } = await db.storage.from('receipts').upload(fileName, photoFile);
-            if (!uploadError) {
-                const { data: { publicUrl } } = db.storage.from('receipts').getPublicUrl(fileName);
-                photoUrl = publicUrl;
-            }
-        }
-
-        const { error } = await db.from('reports').insert([{
-            title,
-            description,
-            photo_url: photoUrl,
-            urgency,
-            status: 'open',
-            created_by: currentUser.id,
-            created_at: new Date().toISOString()
-        }]);
-
-        if (error) throw error;
-        showToast('✅ Reporte enviado correctamente', 'success');
-        closeAddReportModal();
-        loadReports();
-    } catch (err) {
-        console.error('Error guardando reporte:', err);
-        showToast('Error: ' + err.message, 'error');
-    }
-}
-
-async function markReportDone(reportId) {
-    if (!confirm('¿Marcar este reporte como completado?')) return;
-    try {
-        const { error } = await db.from('reports').update({
-            status: 'completed',
-            completed_at: new Date().toISOString()
-        }).eq('id', reportId);
-        if (error) throw error;
-        showToast('✅ Reporte completado', 'success');
-        loadReports();
-    } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-    }
-}
-
-window.loadTasks = loadTasks;
-window.deleteTask = deleteTask;
-window.showAddTaskModal = showAddTaskModal;
-window.closeAddTaskModal = closeAddTaskModal;
-window.saveNewTask = saveNewTask;
-window.showCompleteTaskModal = showCompleteTaskModal;
-window.closeCompleteTaskModal = closeCompleteTaskModal;
-window.confirmCompleteTask = confirmCompleteTask;
-window.loadCleaningHistory = loadCleaningHistory;
-window.loadReports = loadReports;
-window.showAddReportModal = showAddReportModal;
-window.closeAddReportModal = closeAddReportModal;
-window.saveNewReport = saveNewReport;
-window.markReportDone = markReportDone;
-
+                        <span style="color:${color}; font-weight:700; font-size:0.875rem;">${label}</span>
+                        
