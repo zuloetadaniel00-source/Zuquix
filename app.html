@@ -541,7 +541,7 @@ textarea:focus { border-color: var(--primary); }
                         <h2 class="topbar-title" id="page-title">Dashboard</h2>
                     </div>
                     <div class="topbar-right">
-                        <span class="topbar-date" id="topbar-date"></span>
+                        <span class="topbar-date" id="current-date"></span>
                         <button class="topbar-action" onclick="showNewReservation()">+ Nueva Reserva</button>
                     </div>
                 </header>
@@ -566,19 +566,19 @@ textarea:focus { border-color: var(--primary); }
                         <div class="stats-row">
                             <div class="stat-card">
                                 <span class="stat-icon">⬇️</span>
-                                <div class="stat-num" id="checkins-today">0</div>
+                                <div class="stat-num" id="today-checkins">0</div>
                                 <div class="stat-label">Check-ins hoy</div>
                                 <div class="stat-delta neutral" id="checkins-delta">--</div>
                             </div>
                             <div class="stat-card">
                                 <span class="stat-icon">⬆️</span>
-                                <div class="stat-num" id="checkouts-today">0</div>
+                                <div class="stat-num" id="today-checkouts">0</div>
                                 <div class="stat-label">Check-outs hoy</div>
                                 <div class="stat-delta neutral" id="checkouts-delta">--</div>
                             </div>
                             <div class="stat-card">
                                 <span class="stat-icon">💵</span>
-                                <div class="stat-num" id="today-revenue">$0</div>
+                                <div class="stat-num" id="today-income">$0</div>
                                 <div class="stat-label">Ingresos turno</div>
                                 <div class="stat-delta up" id="revenue-delta">--</div>
                             </div>
@@ -592,7 +592,7 @@ textarea:focus { border-color: var(--primary); }
 
                         <!-- Alerts -->
                         <div style="margin-bottom:16px;">
-                            <div id="alerts-container"></div>
+                            <div id="alerts-list"></div>
                         </div>
 
                         <!-- Quick Actions -->
@@ -620,7 +620,7 @@ textarea:focus { border-color: var(--primary); }
                                     <div class="card-title">Huéspedes de hoy</div>
                                     <div class="card-link" onclick="showReservations()">Ver todos →</div>
                                 </div>
-                                <div id="today-reservations-list">
+                                <div id="upcoming-list">
                                     <div class="skeleton" style="height:52px;border-radius:8px;margin-bottom:8px;"></div>
                                     <div class="skeleton" style="height:52px;border-radius:8px;margin-bottom:8px;"></div>
                                     <div class="skeleton" style="height:52px;border-radius:8px;"></div>
@@ -1161,7 +1161,7 @@ function setActiveNav(page) {
 // Actualizar fecha en topbar
 function updateTopbarDate() {
   const now = new Date();
-  const el = document.getElementById('topbar-date');
+  const el = document.getElementById('current-date');
   if (el) el.textContent = now.toLocaleDateString('es-PA', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
 }
 updateTopbarDate();

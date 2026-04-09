@@ -80,7 +80,7 @@ function showPage(pageId) {
         }
 
         const pageName = pageId.replace('-page', '');
-        document.querySelectorAll('.nav-btn').forEach(btn => {
+        document.querySelectorAll('.nav-item').forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.page === pageName) {
                 btn.classList.add('active');
