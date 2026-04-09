@@ -2544,3 +2544,51 @@ body {
 .finance-chart { display:flex; align-items:flex-end; gap:6px; height:80px; margin:12px 0; }
 .finance-bar { flex:1; background:var(--primary); border-radius:4px 4px 0 0; min-height:4px; transition:height 0.5s ease; opacity:0.85; }
 .finance-bar:hover { opacity:1; }
+
+/* ── STATS ROW ──────────────────────────────────── */
+.stats-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.stat-card { background:#fff; border-radius:14px; padding:14px; display:flex; align-items:center; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid var(--gray-100); }
+.stat-card.stat-primary { border-left:3px solid var(--primary); }
+.stat-card.stat-green { border-left:3px solid #10b981; }
+.stat-card.stat-orange { border-left:3px solid #f97316; }
+.stat-card.stat-teal { border-left:3px solid #14b8a6; }
+.stat-icon { font-size:1.4rem; flex-shrink:0; }
+.stat-body { min-width:0; }
+.stat-value { font-size:1.3rem; font-weight:900; color:var(--gray-900); line-height:1; letter-spacing:-0.02em; }
+.stat-label { font-size:0.65rem; color:var(--gray-500); font-weight:600; margin-top:2px; text-transform:uppercase; letter-spacing:0.04em; }
+.stat-sub { font-size:0.7rem; color:var(--gray-400); margin-top:2px; }
+
+/* ── OCC BAR CARD ───────────────────────────────── */
+.occ-bar-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid var(--gray-100); }
+.occ-bar-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:0.8rem; font-weight:700; color:var(--gray-700); }
+
+/* ── HOSTEL BANNER ──────────────────────────────── */
+.hostel-banner-card { border-radius:16px; background:linear-gradient(135deg,#0f766e,#14b8a6); padding:16px 20px; display:flex; align-items:center; gap:14px; margin-bottom:16px; box-shadow:0 4px 16px rgba(13,148,136,.3); }
+.hostel-banner-icon { width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0; }
+.hostel-banner-name { font-size:1rem;font-weight:800;color:#fff;letter-spacing:-0.02em; }
+.hostel-banner-live { font-size:0.7rem;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:6px;margin-top:2px; }
+.live-dot { width:6px;height:6px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite; }
+
+/* ── SECTION CARD ───────────────────────────────── */
+.section-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.06); border:1px solid var(--gray-100); }
+.section-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.section-card-title { font-size:0.85rem; font-weight:800; color:var(--gray-800); }
+.btn-link { background:none; border:none; color:var(--primary); font-size:0.78rem; font-weight:700; cursor:pointer; padding:0; }
+
+/* ── QUICK ACTIONS ──────────────────────────────── */
+.quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+.quick-action-btn { background:#fff; border:1px solid var(--gray-100); border-radius:12px; padding:12px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.05); transition:transform .2s,box-shadow .2s; }
+.quick-action-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.qa-icon { font-size:1.3rem; }
+.qa-label { font-size:0.6rem; font-weight:700; color:var(--gray-600); text-align:center; }
+
+/* ── CASH BALANCE HERO ──────────────────────────── */
+.cash-balance-hero { background:linear-gradient(135deg,#0f766e,#14b8a6); border-radius:20px; padding:24px; text-align:center; margin-bottom:16px; box-shadow:0 8px 24px rgba(13,148,136,.3); }
+.cash-balance-label { font-size:0.78rem; color:rgba(255,255,255,.7); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
+.cash-balance-amount { font-size:2.8rem; font-weight:900; color:#fff; letter-spacing:-0.04em; line-height:1; }
+.cash-balance-sub { font-size:0.7rem; color:rgba(255,255,255,.5); margin-top:6px; }
+
+/* ── VIEW HEADER ────────────────────────────────── */
+.view-header { margin-bottom:20px; }
+.view-header-title { font-size:1.5rem; font-weight:900; color:var(--gray-900); }
+
