@@ -294,6 +294,15 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 /* CHECK-IN FORM */
 .checkin-form { max-width: 620px; }
 
+/* Payment section styles */
+.payment-section { background: var(--card2); border-radius: var(--radius); padding: 14px; margin-top: 12px; }
+.payment-option { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.payment-option:last-child { margin-bottom: 0; }
+.pending-amount { color: var(--red); font-weight: 700; font-size: 1.1rem; margin-top: 8px; }
+.boleta-upload { border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; transition: all var(--transition); }
+.boleta-upload:hover { border-color: var(--accent); background: var(--accent-dim); }
+.boleta-preview { max-width: 100%; max-height: 150px; border-radius: var(--radius); margin-top: 10px; }
+
 /* CAJA */
 .caja-banner {
   background: linear-gradient(135deg, #1c1c1c, #252525);
@@ -320,6 +329,12 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 .mov-amount.ingreso { color: var(--accent); }
 .mov-amount.egreso { color: var(--red); }
 
+/* Caja volunteer view */
+.caja-volunteer { max-width: 500px; }
+.caja-opening-form { background: var(--card2); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+.caja-volunteer-simple { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.caja-current-amount { font-size: 2rem; font-weight: 700; color: var(--amber); text-align: center; margin-bottom: 20px; }
+
 /* TASKS */
 .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; transition: all var(--transition); position: relative; }
 .task-item.done { opacity: 0.55; }
@@ -335,6 +350,11 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 .task-menu-opt { padding: 9px 14px; font-size: 0.8rem; cursor: pointer; transition: background var(--transition); }
 .task-menu-opt:hover { background: var(--hover-bg); }
 .task-menu-opt.del { color: var(--red); }
+
+/* Laundry task specific */
+.task-laundry { border-left: 3px solid var(--purple); }
+.task-laundry .task-checkbox { border-color: var(--purple); }
+.task-laundry .task-checkbox.checked { background: var(--purple); border-color: var(--purple); }
 
 /* TEAM */
 .team-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(190px,1fr)); gap: 16px; }
@@ -447,6 +467,15 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 .guest-detail-row:last-child { border-bottom: none; }
 .guest-detail-label { color: var(--text2); }
 .guest-detail-val { font-weight: 600; }
+
+/* Edit reservation modal */
+.edit-payment-section { background: var(--card2); border-radius: var(--radius); padding: 14px; margin-top: 12px; }
+.pending-edit { color: var(--red); font-weight: 700; }
+
+/* Role selector */
+.role-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+.role-btn { flex: 1; padding: 10px; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius); cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all var(--transition); }
+.role-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -496,10 +525,10 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
       </div>
     </nav>
     <div class="sidebar-user">
-      <div class="user-avatar">RC</div>
+      <div class="user-avatar" id="sidebar-avatar">RC</div>
       <div>
-        <div class="user-name">Rodrigo Castro</div>
-        <div class="user-role">Recepcionista</div>
+        <div class="user-name" id="sidebar-name">Rodrigo Castro</div>
+        <div class="user-role" id="sidebar-role">Admin</div>
       </div>
     </div>
   </aside>
@@ -520,7 +549,7 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
         <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" id="theme-btn">🌙</button>
         <button class="btn btn-accent btn-sm desktop-only" onclick="navigate('checkin')">✚ Nuevo check-in</button>
         <!-- Mobile avatar -->
-        <div class="user-avatar mobile-only" style="width:34px;height:34px;font-size:0.72rem;">RC</div>
+        <div class="user-avatar mobile-only" style="width:34px;height:34px;font-size:0.72rem;" id="mobile-avatar">RC</div>
       </div>
     </header>
 
@@ -578,21 +607,23 @@ td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 
 <script>
 // ===== DATA =====
+let currentUser = { initials: "RC", name: "Rodrigo Castro", role: "admin" }; // admin o volunteer
 let guests = [
-  {id:1, name:"Juan Mora", email:"j.mora@gmail.com", room:"Dorm B", bed:"cama 3", checkin:"8 abr", checkout:"10 abr", nights:2, total:30, status:"checkin-hoy", avatar:"JM", color:"#1ABDA0"},
-  {id:2, name:"Sofia Arias", email:"sofa.arias@outlook.com", room:"Privada 2", bed:"", checkin:"8 abr", checkout:"11 abr", nights:3, total:135, status:"checkin-hoy", avatar:"SA", color:"#8B5CF6"},
-  {id:3, name:"Pedro López", email:"pedro.l@yahoo.com", room:"Dorm A", bed:"cama 1", checkin:"4 abr", checkout:"8 abr", nights:4, total:60, status:"sale-hoy", avatar:"PL", color:"#E74C3C"},
-  {id:4, name:"Karl Weber", email:"k.weber@gmail.de", room:"Privada 1", bed:"", checkin:"7 abr", checkout:"12 abr", nights:5, total:225, status:"in-house", avatar:"KW", color:"#F5A623"},
-  {id:5, name:"Lucía García", email:"lucia.g@hotmail.com", room:"Dorm C", bed:"cama 5", checkin:"9 abr", checkout:"13 abr", nights:4, total:60, status:"confirmada", avatar:"LG", color:"#1ABDA0"},
-  {id:6, name:"Michael Thompson", email:"m.thompson@proton.me", room:"Dorm C", bed:"cama 4", checkin:"12 abr", checkout:"15 abr", nights:3, total:60, status:"booking", avatar:"MT", color:"#378ADD"},
-  {id:7, name:"Amara Rodríguez", email:"amara.r@gmail.com", room:"Privada 2", bed:"", checkin:"14 abr", checkout:"17 abr", nights:3, total:135, status:"pago-pendiente", avatar:"AR", color:"#E74C3C"}
+  {id:1, name:"Juan Mora", email:"j.mora@gmail.com", room:"Dorm B", bed:"cama 3", checkin:"8 abr", checkout:"10 abr", nights:2, total:30, status:"checkin-hoy", avatar:"JM", color:"#1ABDA0", tax: 0, paidAmount: 30, paymentType: "completo", paymentMethod: "Efectivo", boleta: null, pendingAmount: 0},
+  {id:2, name:"Sofia Arias", email:"sofa.arias@outlook.com", room:"Privada 2", bed:"", checkin:"8 abr", checkout:"11 abr", nights:3, total:135, status:"checkin-hoy", avatar:"SA", color:"#8B5CF6", tax: 0, paidAmount: 50, paymentType: "adelanto", paymentMethod: "Tarjeta", boleta: null, pendingAmount: 85},
+  {id:3, name:"Pedro López", email:"pedro.l@yahoo.com", room:"Dorm A", bed:"cama 1", checkin:"4 abr", checkout:"8 abr", nights:4, total:60, status:"sale-hoy", avatar:"PL", color:"#E74C3C", tax: 0, paidAmount: 60, paymentType: "completo", paymentMethod: "Efectivo", boleta: null, pendingAmount: 0},
+  {id:4, name:"Karl Weber", email:"k.weber@gmail.de", room:"Privada 1", bed:"", checkin:"7 abr", checkout:"12 abr", nights:5, total:225, status:"in-house", avatar:"KW", color:"#F5A623", tax: 0, paidAmount: 225, paymentType: "completo", paymentMethod: "Tarjeta", boleta: null, pendingAmount: 0},
+  {id:5, name:"Lucía García", email:"lucia.g@hotmail.com", room:"Dorm C", bed:"cama 5", checkin:"9 abr", checkout:"13 abr", nights:4, total:60, status:"confirmada", avatar:"LG", color:"#1ABDA0", tax: 0, paidAmount: 0, paymentType: "pendiente", paymentMethod: "", boleta: null, pendingAmount: 60},
+  {id:6, name:"Michael Thompson", email:"m.thompson@proton.me", room:"Dorm C", bed:"cama 4", checkin:"12 abr", checkout:"15 abr", nights:3, total:60, status:"booking", avatar:"MT", color:"#378ADD", tax: 0, paidAmount: 0, paymentType: "pendiente", paymentMethod: "", boleta: null, pendingAmount: 60},
+  {id:7, name:"Amara Rodríguez", email:"amara.r@gmail.com", room:"Privada 2", bed:"", checkin:"14 abr", checkout:"17 abr", nights:3, total:135, status:"pago-pendiente", avatar:"AR", color:"#E74C3C", tax: 0, paidAmount: 0, paymentType: "pendiente", paymentMethod: "", boleta: null, pendingAmount: 135}
 ];
 let tasks = [
-  {id:1, title:"Limpieza Privada 1 — cambio de sábanas", assigned:"María V.", time:"10:00 AM", location:"Privada 1", priority:"urgente", done:false},
-  {id:2, title:"Reponer amenities baño compartido piso 2", assigned:"Sin asignar", time:"11:00 AM", location:"Baño piso 2", priority:"medio", done:false},
-  {id:3, title:"Revisar filtro de piscina", assigned:"Carlos M.", time:"14:00 PM", location:"Área exterior", priority:"medio", done:false},
-  {id:4, title:"Limpieza Dorm A — check-out Pedro López", assigned:"María V.", time:"09:15 AM", location:"Dorm A", priority:"hecho", done:true},
-  {id:5, title:"Desayuno preparado — área comedor", assigned:"Rodrigo C.", time:"07:30 AM", location:"Comedor", priority:"hecho", done:true}
+  {id:1, title:"Limpieza Privada 1 — cambio de sábanas", assigned:"María V.", time:"10:00 AM", location:"Privada 1", priority:"urgente", done:false, type:"housekeeping"},
+  {id:2, title:"Reponer amenities baño compartido piso 2", assigned:"Sin asignar", time:"11:00 AM", location:"Baño piso 2", priority:"medio", done:false, type:"housekeeping"},
+  {id:3, title:"Revisar filtro de piscina", assigned:"Carlos M.", time:"14:00 PM", location:"Área exterior", priority:"medio", done:false, type:"maintenance"},
+  {id:4, title:"Limpieza Dorm A — check-out Pedro López", assigned:"María V.", time:"09:15 AM", location:"Dorm A", priority:"hecho", done:true, type:"housekeeping"},
+  {id:5, title:"Desayuno preparado — área comedor", assigned:"Rodrigo C.", time:"07:30 AM", location:"Comedor", priority:"hecho", done:true, type:"housekeeping"},
+  {id:6, title:"Lavandería - Juan Mora", assigned:"María V.", time:"10:30 AM", location:"Dorm B", priority:"medio", done:false, type:"laundry", guestName: "Juan Mora", amount: 5, room: "Dorm B"}
 ];
 let team = [
   {initials:"RC", name:"Rodrigo Castro", role:"Recepcionista", status:"en-turno", shift:"Turno mañana · 06:00 — 14:00", color:"#1ABDA0"},
@@ -602,16 +633,16 @@ let team = [
   {initials:"DG", name:"Daniel García", role:"Admin / Dueño", status:"remoto", shift:"Solo lectura · En línea", color:"#378ADD"}
 ];
 let movements = [
-  {date:"8 abr 09:32", desc:"Check-in Sofia Arias — Privada 2", type:"ingreso", method:"Efectivo", amount:45},
-  {date:"8 abr 08:50", desc:"Noche extra — Karl Weber", type:"ingreso", method:"Tarjeta", amount:45},
-  {date:"8 abr 08:15", desc:"Check-in Juan Mora — Dorm B", type:"ingreso", method:"Efectivo", amount:30},
-  {date:"8 abr 07:40", desc:"Pago anticipado — Lucía García", type:"ingreso", method:"Transferencia", amount:60},
-  {date:"8 abr 06:55", desc:"Check-in grupo — Dorm C x3", type:"ingreso", method:"Efectivo", amount:45},
-  {date:"7 abr 15:20", desc:"Compra suministros limpieza", type:"egreso", method:"Efectivo", amount:38},
-  {date:"7 abr 12:00", desc:"Pago servicio lavandería", type:"egreso", method:"Transferencia", amount:25},
-  {date:"7 abr 09:10", desc:"Check-in Karl Weber — Privada 1", type:"ingreso", method:"Tarjeta", amount:45},
-  {date:"6 abr 18:00", desc:"Reembolso parcial — huésped anterior", type:"egreso", method:"Efectivo", amount:20},
-  {date:"6 abr 11:30", desc:"Check-in grupo — Dorm A x2", type:"ingreso", method:"Efectivo", amount:60}
+  {date:"8 abr 09:32", desc:"Check-in Sofia Arias — Privada 2", type:"ingreso", method:"Tarjeta", amount:50, category:"reserva"},
+  {date:"8 abr 08:50", desc:"Noche extra — Karl Weber", type:"ingreso", method:"Tarjeta", amount:45, category:"reserva"},
+  {date:"8 abr 08:15", desc:"Check-in Juan Mora — Dorm B", type:"ingreso", method:"Efectivo", amount:30, category:"reserva"},
+  {date:"8 abr 07:40", desc:"Pago anticipado — Lucía García", type:"ingreso", method:"Transferencia", amount:60, category:"reserva"},
+  {date:"8 abr 06:55", desc:"Check-in grupo — Dorm C x3", type:"ingreso", method:"Efectivo", amount:45, category:"reserva"},
+  {date:"7 abr 15:20", desc:"Compra suministros limpieza", type:"egreso", method:"Efectivo", amount:38, category:"operativo"},
+  {date:"7 abr 12:00", desc:"Pago servicio lavandería", type:"egreso", method:"Transferencia", amount:25, category:"operativo"},
+  {date:"7 abr 09:10", desc:"Check-in Karl Weber — Privada 1", type:"ingreso", method:"Tarjeta", amount:45, category:"reserva"},
+  {date:"6 abr 18:00", desc:"Reembolso parcial — huésped anterior", type:"egreso", method:"Efectivo", amount:20, category:"reserva"},
+  {date:"6 abr 11:30", desc:"Check-in grupo — Dorm A x2", type:"ingreso", method:"Efectivo", amount:60, category:"reserva"}
 ];
 let otaChannels = [
   {id:'booking', name:'Booking.com', icon:'B', color:'#003580', active:true, lastSync:'hace 5 min', connected:true},
@@ -622,6 +653,10 @@ let otaMasterOn = true;
 let showAllMovements = false;
 let currentPage = 'dashboard';
 let chartInstances = {};
+let cajaBaseAmount = 0;
+let cajaCurrentAmount = 0;
+let cajaManager = "";
+let cajaIsOpen = false;
 
 // ===== NAVIGATION =====
 function navigate(page) {
@@ -662,12 +697,28 @@ function toggleTheme() {
   document.getElementById('theme-btn').textContent = saved === 'dark' ? '🌙' : '☀️';
 })();
 
+// ===== USER ROLE MANAGEMENT =====
+function switchUserRole(role) {
+  currentUser.role = role;
+  const name = role === 'admin' ? 'Rodrigo Castro' : 'Voluntario';
+  const initials = role === 'admin' ? 'RC' : 'V';
+  currentUser.name = name;
+  currentUser.initials = initials;
+  
+  document.getElementById('sidebar-name').textContent = name;
+  document.getElementById('sidebar-role').textContent = role === 'admin' ? 'Admin' : 'Voluntario';
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('mobile-avatar').textContent = initials;
+  
+  if(currentPage === 'caja') renderCaja();
+}
+
 // ===== TOPBAR DATE =====
 (function updateDate() {
   const el = document.getElementById('topbar-date');
   if(!el) return;
   const d = new Intl.DateTimeFormat('es-PA',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Panama'}).format(new Date());
-  el.innerHTML = `<div>${d.charAt(0).toUpperCase()+d.slice(1)}</div><div>Turno mañana · Rodrigo Castro</div>`;
+  el.innerHTML = `<div>${d.charAt(0).toUpperCase()+d.slice(1)}</div><div>Turno mañana · ${currentUser.name}</div>`;
 })();
 
 // ===== TOAST =====
@@ -709,7 +760,8 @@ function statusBadge(s) {
     'in-house':'<span class="badge badge-accent">In-house</span>',
     'confirmada':'<span class="badge badge-accent-outline">Confirmada</span>',
     'booking':'<span class="badge badge-blue-outline">Booking.com</span>',
-    'pago-pendiente':'<span class="badge badge-red">Pago pendiente</span>'
+    'pago-pendiente':'<span class="badge badge-red">Pago pendiente</span>',
+    'checked-out':'<span class="badge badge-gray">Checked-out</span>'
   };
   return m[s]||`<span class="badge badge-gray">${s}</span>`;
 }
@@ -726,6 +778,12 @@ function renderDashboard() {
   const todayGuests = guests.filter(g=>['checkin-hoy','sale-hoy','in-house'].includes(g.status));
   const ingresos = {Efectivo:480, Tarjeta:280, Transferencia:80};
   c.innerHTML = `
+    <div style="margin-bottom: 16px;">
+      <div class="role-selector">
+        <button class="role-btn ${currentUser.role === 'admin' ? 'active' : ''}" onclick="switchUserRole('admin')">Admin</button>
+        <button class="role-btn ${currentUser.role === 'volunteer' ? 'active' : ''}" onclick="switchUserRole('volunteer')">Voluntario</button>
+      </div>
+    </div>
     <div class="occ-banner">
       <div>
         <div class="occ-pct">84%</div>
@@ -754,9 +812,9 @@ function renderDashboard() {
         <div class="metric-delta">⬆ +$120 vs ayer</div>
       </div>
       <div class="metric-card" onclick="navigate('tareas')" title="Ir a tareas">
-        <div class="metric-num" style="color:var(--purple)">3</div>
+        <div class="metric-num" style="color:var(--purple)">${tasks.filter(t => !t.done).length}</div>
         <div class="metric-label">Tareas pendientes</div>
-        <div class="metric-delta">✏ 2 sin asignar</div>
+        <div class="metric-delta">✏ ${tasks.filter(t => !t.done && t.assigned === 'Sin asignar').length} sin asignar</div>
       </div>
     </div>
     <div class="action-row">
@@ -864,7 +922,7 @@ function renderReservasTable() {
   if(reservasSearch) list = list.filter(g=>g.name.toLowerCase().includes(reservasSearch.toLowerCase())||g.room.toLowerCase().includes(reservasSearch.toLowerCase()));
   return `<table>
     <thead><tr>
-      <th>Huésped</th><th>Habitación</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Estado</th>
+      <th>Huésped</th><th>Habitación</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Pendiente</th><th>Estado</th>
     </tr></thead>
     <tbody>
       ${list.map(g=>`
@@ -874,6 +932,7 @@ function renderReservasTable() {
           <td>${g.checkin}</td>
           <td>${g.checkout}</td>
           <td style="font-weight:700">$${g.total}</td>
+          <td style="color:${g.pendingAmount > 0 ? 'var(--red)' : 'var(--accent)'};font-weight:700">$${g.pendingAmount}</td>
           <td>${statusBadge(g.status)}</td>
         </tr>`).join('')}
     </tbody>
@@ -889,19 +948,167 @@ function openGuestModal(id) {
       <div><div style="font-size:1rem;font-weight:700">${g.name}</div><div style="font-size:0.78rem;color:var(--text2)">${g.email}</div></div>
     </div>
     <div>
-      ${[['Habitación',g.room+(g.bed?' · '+g.bed:'')],['Check-in',g.checkin],['Check-out',g.checkout],['Noches',g.nights],['Total','$'+g.total],['Estado',statusBadge(g.status)]].map(([l,v])=>`
+      ${[['Habitación',g.room+(g.bed?' · '+g.bed:'')],['Check-in',g.checkin],['Check-out',g.checkout],['Noches',g.nights],['Total','$'+g.total],['Impuesto','$'+(g.tax||0)],['Pagado','$'+g.paidAmount],['Pendiente','<span style="color:'+(g.pendingAmount>0?'var(--red)':'var(--accent)')+'">$'+g.pendingAmount+'</span>'],['Método',g.paymentMethod||'-'],['Tipo pago',g.paymentType==='completo'?'Completo':g.paymentType==='adelanto'?'Adelanto':'Pendiente'],['Estado',statusBadge(g.status)]].map(([l,v])=>`
         <div class="guest-detail-row"><span class="guest-detail-label">${l}</span><span class="guest-detail-val">${v}</span></div>`).join('')}
+      ${g.boleta ? `<div style="margin-top:12px"><img src="${g.boleta}" style="max-width:100%;border-radius:8px;"></div>` : ''}
     </div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
-     <button class="btn btn-ghost" onclick="showToast('Función de edición próximamente')">Editar reserva</button>
-     <button class="btn btn-accent" onclick="showToast('Pago registrado');closeModal()">Registrar pago</button>`
+     <button class="btn btn-ghost" onclick="closeModal();openEditReservationModal(${g.id})">✏ Editar reserva</button>
+     ${g.pendingAmount > 0 ? `<button class="btn btn-accent" onclick="closeModal();openPaymentModal(${g.id})">💵 Registrar pago</button>` : ''}`
   );
 }
 
+function openEditReservationModal(id) {
+  const g = guests.find(x=>x.id===id);
+  if(!g) return;
+  
+  openModal('Editar reserva - ' + g.name,
+    `<div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="edit-name" value="${g.name}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="edit-email" value="${g.email}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Check-in</label>
+        <input class="form-input" id="edit-checkin" value="${g.checkin}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Check-out</label>
+        <input class="form-input" id="edit-checkout" value="${g.checkout}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total</label>
+      <input class="form-input" id="edit-total" type="number" value="${g.total}" onchange="updateEditPending(${g.id})">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Impuesto</label>
+      <input class="form-input" id="edit-tax" type="number" value="${g.tax||0}" onchange="updateEditPending(${g.id})">
+    </div>
+    <div class="edit-payment-section">
+      <div class="form-group">
+        <label class="form-label">Monto pagado</label>
+        <input class="form-input" id="edit-paid" type="number" value="${g.paidAmount}" onchange="updateEditPending(${g.id})">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;">
+        <label class="radio-label"><input type="radio" name="edit-payment-type" value="completo" ${g.paymentType==='completo'?'checked':''} onchange="toggleEditPaymentType()"> Pago Completo</label>
+        <label class="radio-label"><input type="radio" name="edit-payment-type" value="adelanto" ${g.paymentType==='adelanto'?'checked':''} onchange="toggleEditPaymentType()"> Adelanto</label>
+      </div>
+      <div id="edit-pending-display" style="margin-top:10px;font-size:1rem;" class="pending-edit">
+        Pendiente: $${g.pendingAmount}
+      </div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveEditReservation(${g.id})">Guardar cambios</button>`
+  );
+}
+
+function updateEditPending(id) {
+  const g = guests.find(x=>x.id===id);
+  const total = parseFloat(document.getElementById('edit-total').value) || 0;
+  const tax = parseFloat(document.getElementById('edit-tax').value) || 0;
+  const paid = parseFloat(document.getElementById('edit-paid').value) || 0;
+  const pending = total + tax - paid;
+  document.getElementById('edit-pending-display').innerHTML = `Pendiente: <span style="color:var(--red)">$${pending}</span>`;
+}
+
+function toggleEditPaymentType() {
+  // Logic handled in save
+}
+
+function saveEditReservation(id) {
+  const g = guests.find(x=>x.id===id);
+  if(!g) return;
+  
+  g.name = document.getElementById('edit-name').value;
+  g.email = document.getElementById('edit-email').value;
+  g.checkin = document.getElementById('edit-checkin').value;
+  g.checkout = document.getElementById('edit-checkout').value;
+  g.total = parseFloat(document.getElementById('edit-total').value) || 0;
+  g.tax = parseFloat(document.getElementById('edit-tax').value) || 0;
+  g.paidAmount = parseFloat(document.getElementById('edit-paid').value) || 0;
+  g.paymentType = document.querySelector('input[name="edit-payment-type"]:checked')?.value || 'pendiente';
+  g.pendingAmount = g.total + g.tax - g.paidAmount;
+  
+  closeModal();
+  showToast('✓ Reserva actualizada correctamente');
+  renderReservas();
+}
+
+function openPaymentModal(id) {
+  const g = guests.find(x=>x.id===id);
+  if(!g) return;
+  
+  openModal('Registrar pago - ' + g.name,
+    `<div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:0.8rem;color:var(--text2);margin-bottom:4px;">Monto pendiente</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--red);">$${g.pendingAmount}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto a pagar *</label>
+      <input class="form-input" id="payment-amount" type="number" max="${g.pendingAmount}" value="${g.pendingAmount}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Método de pago</label>
+      <select class="form-select" id="payment-method">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Tarjeta">Tarjeta</option>
+        <option value="Transferencia">Transferencia</option>
+      </select>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="processPayment(${g.id})">Registrar pago</button>`
+  );
+}
+
+function processPayment(id) {
+  const g = guests.find(x=>x.id===id);
+  if(!g) return;
+  
+  const amount = parseFloat(document.getElementById('payment-amount').value) || 0;
+  const method = document.getElementById('payment-method').value;
+  
+  if(amount <= 0 || amount > g.pendingAmount) {
+    showToast('Monto inválido', 'error');
+    return;
+  }
+  
+  g.paidAmount += amount;
+  g.pendingAmount = g.total + g.tax - g.paidAmount;
+  g.paymentMethod = method;
+  
+  if(g.pendingAmount <= 0) {
+    g.paymentType = 'completo';
+  } else {
+    g.paymentType = 'adelanto';
+  }
+  
+  // Registrar en movimientos
+  movements.unshift({
+    date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+    desc: `Pago ${g.name} - ${g.room}`,
+    type: 'ingreso',
+    method: method,
+    amount: amount,
+    category: 'reserva'
+  });
+  
+  closeModal();
+  showToast(`✓ Pago de $${amount} registrado`);
+  renderReservas();
+}
+
 // ===== PAGE 3: CHECK-IN =====
+let boletaFile = null;
+
 function renderCheckin() {
   const c = document.getElementById('page-content');
   const today = new Date().toISOString().split('T')[0];
+  boletaFile = null;
   c.innerHTML = `
     <div class="checkin-form card">
       <div class="card-title">Registrar nuevo huésped</div>
@@ -965,10 +1172,34 @@ function renderCheckin() {
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">Impuesto (opcional)</label>
+        <input class="form-input" id="ci-tax" type="number" placeholder="0.00" value="0" oninput="calcNights()">
+      </div>
+      <div class="form-group">
         <label class="form-label">Total</label>
         <input class="form-input" id="ci-total" type="text" readonly placeholder="Auto" style="background:var(--card2);font-weight:700">
       </div>
-      <div class="form-group">
+      
+      <div class="payment-section">
+        <div class="form-label" style="margin-bottom:10px;">Tipo de pago</div>
+        <div class="payment-option">
+          <input type="radio" name="ci-payment-type" id="pay-completo" value="completo" checked onchange="togglePaymentType()">
+          <label for="pay-completo" style="font-size:0.84rem;cursor:pointer;">Pago Completo</label>
+        </div>
+        <div class="payment-option">
+          <input type="radio" name="ci-payment-type" id="pay-adelanto" value="adelanto" onchange="togglePaymentType()">
+          <label for="pay-adelanto" style="font-size:0.84rem;cursor:pointer;">Adelanto</label>
+        </div>
+        <div id="adelanto-input" style="display:none;margin-top:10px;">
+          <label class="form-label">Monto del adelanto *</label>
+          <input class="form-input" id="ci-adelanto-amount" type="number" placeholder="0.00" oninput="calcPending()">
+        </div>
+        <div id="pending-display" style="display:none;margin-top:10px;" class="pending-amount">
+          Pago pendiente: $0
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-top:14px;">
         <label class="form-label">Método de pago</label>
         <div class="radio-group">
           <label class="radio-label"><input type="radio" name="ci-payment" value="Efectivo" checked> Efectivo</label>
@@ -977,6 +1208,16 @@ function renderCheckin() {
           <label class="radio-label"><input type="radio" name="ci-payment" value="OTA"> OTA</label>
         </div>
       </div>
+      
+      <div class="form-group">
+        <label class="form-label">Boleta / Comprobante</label>
+        <div class="boleta-upload" onclick="document.getElementById('boleta-input').click()">
+          <div id="boleta-text">📷 Haga clic para subir foto de boleta</div>
+          <input type="file" id="boleta-input" accept="image/*" style="display:none" onchange="handleBoletaUpload(this)">
+          <img id="boleta-preview" class="boleta-preview" style="display:none;">
+        </div>
+      </div>
+      
       <div class="form-group">
         <label class="form-label">Notas</label>
         <textarea class="form-textarea" id="ci-notes" placeholder="Notas adicionales…"></textarea>
@@ -1010,17 +1251,51 @@ function calcNights() {
   const ci=document.getElementById('ci-checkin').value;
   const co=document.getElementById('ci-checkout').value;
   const rate=parseFloat(document.getElementById('ci-rate').value)||0;
+  const tax=parseFloat(document.getElementById('ci-tax').value)||0;
   if(ci&&co){
     const d=(new Date(co)-new Date(ci))/(86400000);
     if(d>0){
       document.getElementById('ci-nights').value=d+' noche'+(d>1?'s':'');
-      document.getElementById('ci-total').value='$'+(d*rate).toFixed(2);
+      const subtotal = d*rate;
+      document.getElementById('ci-total').value='$'+(subtotal+tax).toFixed(2);
+      calcPending();
     } else {
       document.getElementById('ci-nights').value='';
       document.getElementById('ci-total').value='';
     }
   }
 }
+
+function togglePaymentType() {
+  const isAdelanto = document.getElementById('pay-adelanto').checked;
+  document.getElementById('adelanto-input').style.display = isAdelanto ? 'block' : 'none';
+  document.getElementById('pending-display').style.display = isAdelanto ? 'block' : 'none';
+  calcPending();
+}
+
+function calcPending() {
+  const totalText = document.getElementById('ci-total').value || '$0';
+  const total = parseFloat(totalText.replace('$','')) || 0;
+  const adelanto = parseFloat(document.getElementById('ci-adelanto-amount').value) || 0;
+  const pending = total - adelanto;
+  if(pending >= 0) {
+    document.getElementById('pending-display').innerHTML = `Pago pendiente: <span style="color:var(--red);font-weight:700;">$${pending.toFixed(2)}</span>`;
+  }
+}
+
+function handleBoletaUpload(input) {
+  if(input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      boletaFile = e.target.result;
+      document.getElementById('boleta-preview').src = boletaFile;
+      document.getElementById('boleta-preview').style.display = 'block';
+      document.getElementById('boleta-text').textContent = '✓ Boleta cargada';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
 function submitCheckin() {
   let valid=true;
   function req(id,errId){ const v=document.getElementById(id).value; if(!v){ document.getElementById(errId).classList.add('show'); valid=false; } else { document.getElementById(errId).classList.remove('show'); } return v; }
@@ -1031,23 +1306,221 @@ function submitCheckin() {
   const co=req('ci-checkout','err-checkout');
   if(!valid) return;
   const nights=parseInt((document.getElementById('ci-nights').value||'1'));
-  const total=parseFloat((document.getElementById('ci-total').value||'0').replace('$',''));
+  const rate=parseFloat(document.getElementById('ci-rate').value)||0;
+  const tax=parseFloat(document.getElementById('ci-tax').value)||0;
+  const total=(nights*rate)+tax;
   const bed=document.getElementById('ci-bed')?.value||'';
-  const payment=document.querySelector('input[name="ci-payment"]:checked')?.value||'Efectivo';
-  const newGuest={id:Date.now(),name,email:document.getElementById('ci-email').value,room,bed,checkin:ci,checkout:co,nights:nights||1,total,status:'checkin-hoy',avatar:name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),color:'#1ABDA0'};
+  const paymentMethod=document.querySelector('input[name="ci-payment"]:checked')?.value||'Efectivo';
+  const paymentType = document.querySelector('input[name="ci-payment-type"]:checked')?.value || 'completo';
+  let paidAmount = total;
+  let pendingAmount = 0;
+  
+  if(paymentType === 'adelanto') {
+    paidAmount = parseFloat(document.getElementById('ci-adelanto-amount').value) || 0;
+    pendingAmount = total - paidAmount;
+  }
+  
+  const newGuest={id:Date.now(),name,email:document.getElementById('ci-email').value,room,bed,checkin:ci,checkout:co,nights:nights||1,total,tax,status:'checkin-hoy',avatar:name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),color:'#1ABDA0',paidAmount,pendingAmount,paymentType,paymentMethod,boleta:boletaFile};
   guests.push(newGuest);
-  movements.unshift({date:new Date().toLocaleDateString('es-PA')+ ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),desc:`Check-in ${name} — ${room}`,type:'ingreso',method:payment,amount:total});
+  movements.unshift({date:new Date().toLocaleDateString('es-PA')+ ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),desc:`Check-in ${name} — ${room}`,type:'ingreso',method:paymentMethod,amount:paidAmount,category:'reserva'});
+  
+  // Si hay pago pendiente, agregar a tareas de lavandería si aplica
+  if(pendingAmount > 0 && room.includes('Dorm')) {
+    tasks.push({
+      id: Date.now(),
+      title: `Lavandería - ${name}`,
+      assigned: "Sin asignar",
+      time: "09:00 AM",
+      location: room,
+      priority: "medio",
+      done: false,
+      type: "laundry",
+      guestName: name,
+      amount: 5,
+      room: room
+    });
+  }
+  
   showToast('✓ Check-in registrado correctamente');
+  boletaFile = null;
   renderCheckin();
 }
 
 // ===== PAGE 4: CAJA =====
 function renderCaja() {
   const c = document.getElementById('page-content');
+  
+  if(currentUser.role === 'volunteer') {
+    renderCajaVolunteer(c);
+  } else {
+    renderCajaAdmin(c);
+  }
+}
+
+function renderCajaVolunteer(c) {
+  if(!cajaIsOpen) {
+    c.innerHTML = `
+      <div class="caja-volunteer">
+        <div class="caja-opening-form">
+          <div class="card-title" style="margin-bottom:16px;">Abrir Caja - Voluntario</div>
+          <div class="form-group">
+            <label class="form-label">Nombre del encargado *</label>
+            <input class="form-input" id="caja-manager" placeholder="Tu nombre">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monto inicial en caja ($)</label>
+            <input class="form-input" id="caja-initial" type="number" value="0" placeholder="0.00">
+          </div>
+          <button class="btn btn-accent btn-lg" onclick="openCajaVolunteer()">Abrir caja</button>
+        </div>
+      </div>`;
+    return;
+  }
+  
+  // Calcular solo ingresos en efectivo de reservas
+  const efectivoIngresos = movements
+    .filter(m => m.type === 'ingreso' && m.method === 'Efectivo' && m.category === 'reserva')
+    .reduce((s,m) => s + m.amount, 0);
+  
+  c.innerHTML = `
+    <div class="caja-volunteer">
+      <div class="caja-volunteer-simple">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div>
+            <div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;">Encargado</div>
+            <div style="font-weight:700;">${cajaManager}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="closeCajaVolunteer()">Cerrar caja</button>
+        </div>
+        
+        <div class="caja-current-amount">
+          $${cajaBaseAmount + efectivoIngresos}
+        </div>
+        
+        <div style="background:var(--card2);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:var(--text2);">Monto inicial</span>
+            <span>$${cajaBaseAmount}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:var(--accent);">
+            <span>Ingresos efectivo (reservas)</span>
+            <span>+$${efectivoIngresos}</span>
+          </div>
+        </div>
+        
+        <button class="btn btn-accent btn-lg" onclick="openAddLaundryModal()">+ Registrar Lavandería</button>
+      </div>
+    </div>`;
+}
+
+function openCajaVolunteer() {
+  const manager = document.getElementById('caja-manager').value;
+  const initial = parseFloat(document.getElementById('caja-initial').value) || 0;
+  
+  if(!manager) {
+    showToast('Ingresa tu nombre', 'error');
+    return;
+  }
+  
+  cajaManager = manager;
+  cajaBaseAmount = initial;
+  cajaIsOpen = true;
+  
+  // Registrar apertura en movimientos si hay monto inicial
+  if(initial > 0) {
+    movements.unshift({
+      date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+      desc: `Apertura de caja - ${manager}`,
+      type: 'ingreso',
+      method: 'Efectivo',
+      amount: initial,
+      category: 'apertura'
+    });
+  }
+  
+  showToast('✓ Caja abierta correctamente');
+  renderCaja();
+}
+
+function closeCajaVolunteer() {
+  cajaIsOpen = false;
+  cajaManager = "";
+  showToast('Caja cerrada');
+  renderCaja();
+}
+
+function openAddLaundryModal() {
+  openModal('Registrar Lavandería',
+    `<div class="form-group">
+      <label class="form-label">Nombre de persona *</label>
+      <input class="form-input" id="laundry-name" placeholder="Nombre del huésped">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Habitación *</label>
+      <input class="form-input" id="laundry-room" placeholder="Ej: Dorm A">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto ($) *</label>
+      <input class="form-input" id="laundry-amount" type="number" placeholder="5.00">
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveLaundry()">Guardar</button>`
+  );
+}
+
+function saveLaundry() {
+  const name = document.getElementById('laundry-name').value;
+  const room = document.getElementById('laundry-room').value;
+  const amount = parseFloat(document.getElementById('laundry-amount').value) || 0;
+  
+  if(!name || !room || !amount) {
+    showToast('Completa todos los campos', 'error');
+    return;
+  }
+  
+  // Agregar a tareas
+  tasks.push({
+    id: Date.now(),
+    title: `Lavandería - ${name}`,
+    assigned: "Sin asignar",
+    time: new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+    location: room,
+    priority: "medio",
+    done: false,
+    type: "laundry",
+    guestName: name,
+    amount: amount,
+    room: room
+  });
+  
+  // Registrar ingreso en movimientos
+  movements.unshift({
+    date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+    desc: `Lavandería - ${name} (${room})`,
+    type: 'ingreso',
+    method: 'Efectivo',
+    amount: amount,
+    category: 'laundry'
+  });
+  
+  closeModal();
+  showToast('✓ Lavandería registrada');
+  updateTaskBadge();
+  renderCaja();
+}
+
+function renderCajaAdmin(c) {
   const inc = movements.filter(m=>m.type==='ingreso').reduce((s,m)=>s+m.amount,0);
   const exp = movements.filter(m=>m.type==='egreso').reduce((s,m)=>s+m.amount,0);
   const shownMovs = showAllMovements ? movements : movements.slice(0,6);
+  
   c.innerHTML = `
+    <div style="margin-bottom: 16px;">
+      <div class="role-selector">
+        <button class="role-btn ${currentUser.role === 'admin' ? 'active' : ''}" onclick="switchUserRole('admin')">Vista Admin</button>
+        <button class="role-btn ${currentUser.role === 'volunteer' ? 'active' : ''}" onclick="switchUserRole('volunteer')">Vista Voluntario</button>
+      </div>
+    </div>
     <div class="caja-banner">
       <div class="caja-banner-left">
         <div class="caja-shift-tag">Turno mañana · Bocas del Toro</div>
@@ -1072,6 +1545,15 @@ function renderCaja() {
           <span class="caja-total-label">Total del turno</span>
           <span class="caja-total-val">$840</span>
         </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="form-group">
+            <label class="form-label">Actualizar monto en caja</label>
+            <div style="display:flex;gap:8px;">
+              <input class="form-input" id="caja-update-amount" type="number" placeholder="Nuevo monto">
+              <button class="btn btn-accent" onclick="updateCajaAmount()">Actualizar</button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1091,6 +1573,40 @@ function renderCaja() {
       </div>
     </div>`;
 }
+
+function updateCajaAmount() {
+  const newAmount = parseFloat(document.getElementById('caja-update-amount').value);
+  if(isNaN(newAmount)) {
+    showToast('Ingresa un monto válido', 'error');
+    return;
+  }
+  
+  const currentEfectivo = movements
+    .filter(m => m.method === 'Efectivo')
+    .reduce((s, m) => s + (m.type === 'ingreso' ? m.amount : -m.amount), 0);
+  
+  const difference = newAmount - currentEfectivo;
+  
+  if(difference !== 0) {
+    const type = difference > 0 ? 'ingreso' : 'egreso';
+    movements.unshift({
+      date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+      desc: `Actualización de caja - Ajuste ${type === 'ingreso' ? 'positivo' : 'negativo'}`,
+      type: type,
+      method: 'Efectivo',
+      amount: Math.abs(difference),
+      category: 'ajuste'
+    });
+    
+    showToast(`✓ Caja actualizada. ${type === 'ingreso' ? 'Ingreso' : 'Egreso'} registrado: $${Math.abs(difference)}`);
+  } else {
+    showToast('No hay diferencia para ajustar');
+  }
+  
+  document.getElementById('caja-update-amount').value = '';
+  renderCaja();
+}
+
 function openAddMovModal() {
   openModal('Registrar movimiento',
     `<div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="mov-desc" placeholder="Descripción…"></div>
@@ -1099,6 +1615,7 @@ function openAddMovModal() {
        <div class="form-group"><label class="form-label">Monto ($)</label><input class="form-input" id="mov-amount" type="number" placeholder="0.00"></div>
      </div>
      <div class="form-group"><label class="form-label">Método de pago</label><select class="form-select" id="mov-method"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></div>
+     <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="mov-category"><option value="reserva">Reserva</option><option value="operativo">Operativo</option><option value="laundry">Lavandería</option><option value="otros">Otros</option></select></div>
      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="mov-notes" rows="2"></textarea></div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
      <button class="btn btn-accent" onclick="saveMovimiento()">Guardar</button>`
@@ -1109,7 +1626,7 @@ function saveMovimiento() {
   const amount=parseFloat(document.getElementById('mov-amount').value)||0;
   if(!desc||!amount){ showToast('Completa todos los campos','error'); return; }
   const now=new Date();
-  movements.unshift({date:`${now.getDate()} abr ${now.toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'})}`,desc,type:document.getElementById('mov-type').value,method:document.getElementById('mov-method').value,amount});
+  movements.unshift({date:`${now.getDate()} abr ${now.toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'})}`,desc,type:document.getElementById('mov-type').value,method:document.getElementById('mov-method').value,amount,category:document.getElementById('mov-category').value||'otros'});
   closeModal(); showToast('✓ Movimiento registrado'); renderCaja();
 }
 
@@ -1123,11 +1640,14 @@ function renderTareas() {
   let list=tasks;
   if(tareasFilter==='pendientes') list=tasks.filter(t=>!t.done);
   else if(tareasFilter==='completadas') list=tasks.filter(t=>t.done);
+  else if(tareasFilter==='laundry') list=tasks.filter(t=>t.type==='laundry' && !t.done);
+  
   c.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div class="filter-tabs" style="margin:0">
         <div class="filter-tab ${tareasFilter==='todas'?'active':''}" onclick="setTareasFilter('todas')">Todas</div>
         <div class="filter-tab ${tareasFilter==='pendientes'?'active':''}" onclick="setTareasFilter('pendientes')">Pendientes <span style="background:var(--amber);color:#1a1a1a;border-radius:999px;padding:0 5px;font-size:0.65rem;font-weight:700">${pending}</span></div>
+        <div class="filter-tab ${tareasFilter==='laundry'?'active':''}" onclick="setTareasFilter('laundry')">Lavandería</div>
         <div class="filter-tab ${tareasFilter==='completadas'?'active':''}" onclick="setTareasFilter('completadas')">Completadas <span style="opacity:0.6">${done}</span></div>
       </div>
       <button class="btn btn-accent btn-sm" onclick="openNewTaskModal()">+ Nueva tarea</button>
@@ -1137,13 +1657,14 @@ function renderTareas() {
     </div>`;
 }
 function renderTaskItem(t) {
-  return `<div class="task-item ${t.done?'done':''}" id="task-${t.id}">
+  const isLaundry = t.type === 'laundry';
+  return `<div class="task-item ${t.done?'done':''} ${isLaundry?'task-laundry':''}" id="task-${t.id}">
     <div class="task-checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})">
       ${t.done?'✓':''}
     </div>
     <div class="task-info">
       <div class="task-title">${t.title}</div>
-      <div class="task-sub">👤 ${t.assigned} · 🕐 ${t.time} · 📍 ${t.location}</div>
+      <div class="task-sub">👤 ${t.assigned} · 🕐 ${t.time} · 📍 ${t.location}${isLaundry && t.amount ? ' · 💵 $'+t.amount : ''}</div>
     </div>
     ${priorityBadge(t.done?'hecho':t.priority)}
     <button class="task-menu-btn" onclick="toggleTaskMenu(event,${t.id})">···</button>
@@ -1187,6 +1708,18 @@ function openNewTaskModal(prefill) {
        <div class="form-group"><label class="form-label">Hora</label><input class="form-input" id="tk-time" type="time" value="${prefill?.time?.replace(' AM','').replace(' PM','')||''}"></div>
      </div>
      <div class="form-group"><label class="form-label">Ubicación</label><input class="form-input" id="tk-loc" value="${prefill?.location||''}"></div>
+     <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="tk-type" onchange="toggleTaskType()">
+       <option value="housekeeping" ${prefill?.type==='housekeeping'||!prefill?'selected':''}>Housekeeping</option>
+       <option value="maintenance" ${prefill?.type==='maintenance'?'selected':''}>Mantenimiento</option>
+       <option value="laundry" ${prefill?.type==='laundry'?'selected':''}>Lavandería</option>
+       <option value="otros" ${prefill?.type==='otros'?'selected':''}>Otros</option>
+     </select></div>
+     <div id="laundry-fields" style="display:${prefill?.type==='laundry'?'block':'none'};">
+       <div class="form-row">
+         <div class="form-group"><label class="form-label">Nombre huésped</label><input class="form-input" id="tk-guest" value="${prefill?.guestName||''}"></div>
+         <div class="form-group"><label class="form-label">Monto ($)</label><input class="form-input" id="tk-amount" type="number" value="${prefill?.amount||''}"></div>
+       </div>
+     </div>
      <div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="tk-priority">
        <option value="urgente" ${prefill?.priority==='urgente'?'selected':''}>Urgente</option>
        <option value="medio" ${prefill?.priority==='medio'||!prefill?'selected':''}>Medio</option>
@@ -1196,16 +1729,40 @@ function openNewTaskModal(prefill) {
      <button class="btn btn-accent" onclick="saveTask(${prefill?.id||'null'})">Guardar</button>`
   );
 }
+
+function toggleTaskType() {
+  const type = document.getElementById('tk-type').value;
+  document.getElementById('laundry-fields').style.display = type === 'laundry' ? 'block' : 'none';
+}
+
 function openEditTaskModal(id){ openNewTaskModal(tasks.find(t=>t.id===id)); }
 function saveTask(id) {
   const title=document.getElementById('tk-title').value;
   if(!title){ showToast('El título es requerido','error'); return; }
-  if(id&&id!=='null') {
-    const t=tasks.find(x=>x.id===id);
-    if(t){ Object.assign(t,{title,assigned:document.getElementById('tk-assign').value,time:document.getElementById('tk-time').value,location:document.getElementById('tk-loc').value,priority:document.getElementById('tk-priority').value}); }
-  } else {
-    tasks.push({id:Date.now(),title,assigned:document.getElementById('tk-assign').value,time:document.getElementById('tk-time').value,location:document.getElementById('tk-loc').value,priority:document.getElementById('tk-priority').value,done:false});
+  const type = document.getElementById('tk-type').value;
+  const newTask = {
+    id: id&&id!=='null' ? id : Date.now(),
+    title,
+    assigned:document.getElementById('tk-assign').value,
+    time:document.getElementById('tk-time').value,
+    location:document.getElementById('tk-loc').value,
+    type: type,
+    priority:document.getElementById('tk-priority').value,
+    done: id&&id!=='null' ? tasks.find(t=>t.id===id)?.done : false
+  };
+  
+  if(type === 'laundry') {
+    newTask.guestName = document.getElementById('tk-guest').value;
+    newTask.amount = parseFloat(document.getElementById('tk-amount').value) || 0;
   }
+  
+  if(id&&id!=='null') {
+    const idx = tasks.findIndex(t=>t.id===id);
+    if(idx >= 0) tasks[idx] = {...tasks[idx], ...newTask};
+  } else {
+    tasks.push(newTask);
+  }
+  
   closeModal(); updateTaskBadge(); renderTareas(); showToast('✓ Tarea guardada');
 }
 
@@ -1243,9 +1800,53 @@ function openMemberModal(initials) {
      <div class="guest-detail-row"><span class="guest-detail-label">Estado</span><span class="guest-detail-val">${m.status}</span></div>
      <div class="guest-detail-row"><span class="guest-detail-label">Turno</span><span class="guest-detail-val">${m.shift}</span></div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">Cerrar</button>
-     <button class="btn btn-accent" onclick="showToast('Función de edición de turno próximamente');closeModal()">Editar turno</button>`
+     <button class="btn btn-red" onclick="deleteMember('${initials}')">🗑 Eliminar</button>
+     <button class="btn btn-accent" onclick="openEditShiftModal('${initials}')">✏ Editar turno</button>`
   );
 }
+
+function openEditShiftModal(initials) {
+  const m = team.find(x => x.initials === initials);
+  if(!m) return;
+  
+  openModal('Editar turno - ' + m.name,
+    `<div class="form-group">
+      <label class="form-label">Estado</label>
+      <select class="form-select" id="edit-status">
+        <option value="en-turno" ${m.status==='en-turno'?'selected':''}>En turno</option>
+        <option value="dia-libre" ${m.status==='dia-libre'?'selected':''}>Día libre</option>
+        <option value="remoto" ${m.status==='remoto'?'selected':''}>Remoto</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Horario / Turno</label>
+      <input class="form-input" id="edit-shift" value="${m.shift}">
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveMemberShift('${initials}')">Guardar</button>`
+  );
+}
+
+function saveMemberShift(initials) {
+  const m = team.find(x => x.initials === initials);
+  if(m) {
+    m.status = document.getElementById('edit-status').value;
+    m.shift = document.getElementById('edit-shift').value;
+    closeModal();
+    showToast('✓ Turno actualizado');
+    renderEquipo();
+  }
+}
+
+function deleteMember(initials) {
+  if(confirm('¿Eliminar a este miembro del equipo? Esta acción no se puede deshacer.')) {
+    team = team.filter(m => m.initials !== initials);
+    closeModal();
+    showToast('✓ Miembro eliminado');
+    renderEquipo();
+  }
+}
+
 function openInviteMemberModal() {
   openModal('Invitar miembro',
     `<div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" id="inv-name" placeholder="Nombre completo"></div>
@@ -1328,17 +1929,18 @@ function renderMovTable(list) {
   const inc=list.filter(m=>m.type==='ingreso').reduce((s,m)=>s+m.amount,0);
   const exp=list.filter(m=>m.type==='egreso').reduce((s,m)=>s+m.amount,0);
   return `<table>
-    <thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Método</th><th>Monto</th></tr></thead>
+    <thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Método</th><th>Categoría</th><th>Monto</th></tr></thead>
     <tbody>
       ${list.map(m=>`<tr style="background:${m.type==='ingreso'?'rgba(26,189,160,0.05)':'rgba(231,76,60,0.05)'}">
         <td style="font-size:0.76rem;color:var(--text2)">${m.date}</td>
         <td>${m.desc}</td>
         <td>${m.type==='ingreso'?'<span class="badge badge-accent">Ingreso</span>':'<span class="badge badge-red">Egreso</span>'}</td>
         <td><span class="badge badge-gray">${m.method}</span></td>
+        <td><span class="badge badge-gray">${m.category||'otros'}</span></td>
         <td style="font-weight:700;color:${m.type==='ingreso'?'var(--accent)':'var(--red)'}">${m.type==='ingreso'?'+':'-'}$${m.amount}</td>
       </tr>`).join('')}
       <tr style="font-weight:700;border-top:2px solid var(--border)">
-        <td colspan="4" style="text-align:right;font-size:0.78rem;color:var(--text2)">Totales</td>
+        <td colspan="5" style="text-align:right;font-size:0.78rem;color:var(--text2)">Totales</td>
         <td><div style="color:var(--accent)">+$${inc}</div><div style="color:var(--red)">-$${exp}</div><div style="color:var(--amber)">=$${inc-exp}</div></td>
       </tr>
     </tbody>
@@ -1346,7 +1948,7 @@ function renderMovTable(list) {
 }
 function exportFinanzas() {
   const list=filteredMovements||movements;
-  const rows=['Fecha\tDescripción\tTipo\tMétodo\tMonto',...list.map(m=>`${m.date}\t${m.desc}\t${m.type}\t${m.method}\t$${m.amount}`)].join('\n');
+  const rows=['Fecha\tDescripción\tTipo\tMétodo\tCategoría\tMonto',...list.map(m=>`${m.date}\t${m.desc}\t${m.type}\t${m.method}\t${m.category||'otros'}\t$${m.amount}`)].join('\n');
   const blob=new Blob([rows],{type:'text/plain'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='reporte-zuquix.csv'; a.click();
   showToast('✓ Reporte exportado');
@@ -1469,7 +2071,7 @@ function generateReport(idx, title) {
     content+=`\nTotal ingresos: $${movements.filter(m=>m.type==='ingreso').reduce((s,m)=>s+m.amount,0)}\n`;
   } else {
     content+='HISTORIAL DE HUÉSPEDES:\n';
-    guests.forEach(g=>{ content+=`${g.name} | ${g.room} | ${g.checkin} → ${g.checkout} | ${g.nights}n | $${g.total} | ${g.status}\n`; });
+    guests.forEach(g=>{ content+=`${g.name} | ${g.room} | ${g.checkin} → ${g.checkout} | ${g.nights}n | $${g.total} | Pendiente: $${g.pendingAmount} | ${g.status}\n`; });
   }
   const blob=new Blob([content],{type:'text/plain'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`reporte-${title.replace(/\s/g,'-').toLowerCase()}.txt`; a.click();
