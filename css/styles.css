@@ -2504,3 +2504,43 @@ body {
     }
 }
 
+
+/* ── WIZARD PROGRESS ────────────────────────────── */
+.wizard-progress { display:flex; align-items:center; padding:0 0 20px; margin-bottom:16px; }
+.wizard-step-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.wstep-num { width:32px; height:32px; border-radius:50%; background:var(--gray-200); color:var(--gray-500); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:800; transition:all 0.3s; }
+.wizard-step-item.active .wstep-num { background:var(--primary); color:#fff; box-shadow:0 0 0 3px rgba(13,148,136,0.2); }
+.wizard-step-item.done .wstep-num { background:#10b981; color:#fff; }
+.wstep-label { font-size:0.65rem; font-weight:600; color:var(--gray-400); white-space:nowrap; }
+.wizard-step-item.active .wstep-label { color:var(--primary); }
+.wizard-step-item.done .wstep-label { color:#10b981; }
+.wizard-step-line { flex:1; height:2px; background:var(--gray-200); margin:0 6px; margin-bottom:14px; transition:background 0.3s; }
+.wizard-step-line.done { background:#10b981; }
+
+/* ── STATS GRID 2x2 ─────────────────────────────── */
+.stats-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+
+/* ── VIEW HEADER ─────────────────────────────────── */
+.view-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid var(--gray-100); }
+.view-header-title { font-size:1.1rem; font-weight:800; color:var(--gray-900); letter-spacing:-0.02em; }
+
+/* ── BTN DANGER ──────────────────────────────────── */
+.btn-danger { background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; box-shadow:0 4px 12px rgba(239,68,68,0.25); }
+.btn-danger:hover { box-shadow:0 6px 18px rgba(239,68,68,0.35); transform:translateY(-1px); }
+
+/* ── OTA CHANNEL CARDS ───────────────────────────── */
+.ota-channel-card { background:#fff; border:1px solid var(--gray-100); border-radius:var(--radius); padding:16px; display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.ota-status-badge { padding:3px 10px; border-radius:999px; font-size:0.7rem; font-weight:700; }
+.ota-status-badge.connected { background:#dcfce7; color:#16a34a; }
+.ota-status-badge.disconnected { background:#fee2e2; color:#dc2626; }
+.ota-status-badge.pending { background:#fef9c3; color:#ca8a04; }
+
+/* ── PERIOD SELECTOR ─────────────────────────────── */
+.period-selector { display:flex; gap:6px; margin-bottom:16px; }
+.period-btn { padding:6px 14px; border-radius:999px; border:1px solid var(--gray-200); background:#fff; font-size:0.78rem; font-weight:600; color:var(--gray-500); cursor:pointer; transition:all 0.2s; }
+.period-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+/* ── FINANCE CHART BARS ──────────────────────────── */
+.finance-chart { display:flex; align-items:flex-end; gap:6px; height:80px; margin:12px 0; }
+.finance-bar { flex:1; background:var(--primary); border-radius:4px 4px 0 0; min-height:4px; transition:height 0.5s ease; opacity:0.85; }
+.finance-bar:hover { opacity:1; }

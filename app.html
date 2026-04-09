@@ -219,10 +219,12 @@
                     <button onclick="goBack()" class="btn btn-back">← Volver</button>
                     <h3>Nueva Reserva - Paso 1/3</h3>
                 </div>
-                <div class="step-indicator">
-                    <div class="step active">1</div>
-                    <div class="step">2</div>
-                    <div class="step">3</div>
+                <div class="wizard-progress">
+                    <div class="wizard-step-item active" id="wstep1"><span class="wstep-num">1</span><span class="wstep-label">Habitación</span></div>
+                    <div class="wizard-step-line" id="wline1"></div>
+                    <div class="wizard-step-item" id="wstep2"><span class="wstep-num">2</span><span class="wstep-label">Huésped</span></div>
+                    <div class="wizard-step-line" id="wline2"></div>
+                    <div class="wizard-step-item" id="wstep3"><span class="wstep-num">3</span><span class="wstep-label">Pago</span></div>
                 </div>
                 
                 <form id="step1-form" class="reservation-form">
@@ -270,10 +272,12 @@
                     <button onclick="goToStep(1)" class="btn btn-back">← Paso 1</button>
                     <h3>Datos del Huésped - Paso 2/3</h3>
                 </div>
-                <div class="step-indicator">
-                    <div class="step completed">✓</div>
-                    <div class="step active">2</div>
-                    <div class="step">3</div>
+                <div class="wizard-progress">
+                    <div class="wizard-step-item done" id="wstep1"><span class="wstep-num">✓</span><span class="wstep-label">Habitación</span></div>
+                    <div class="wizard-step-line done" id="wline1"></div>
+                    <div class="wizard-step-item active" id="wstep2"><span class="wstep-num">2</span><span class="wstep-label">Huésped</span></div>
+                    <div class="wizard-step-line" id="wline2"></div>
+                    <div class="wizard-step-item" id="wstep3"><span class="wstep-num">3</span><span class="wstep-label">Pago</span></div>
                 </div>
                 
                 <form id="step2-form" class="reservation-form">
@@ -333,10 +337,12 @@
                     <button onclick="goToStep(2)" class="btn btn-back">← Paso 2</button>
                     <h3>Pago - Paso 3/3</h3>
                 </div>
-                <div class="step-indicator">
-                    <div class="step completed">✓</div>
-                    <div class="step completed">✓</div>
-                    <div class="step active">3</div>
+                <div class="wizard-progress">
+                    <div class="wizard-step-item done" id="wstep1"><span class="wstep-num">✓</span><span class="wstep-label">Habitación</span></div>
+                    <div class="wizard-step-line done" id="wline1"></div>
+                    <div class="wizard-step-item done" id="wstep2"><span class="wstep-num">✓</span><span class="wstep-label">Huésped</span></div>
+                    <div class="wizard-step-line done" id="wline2"></div>
+                    <div class="wizard-step-item active" id="wstep3"><span class="wstep-num">3</span><span class="wstep-label">Pago</span></div>
                 </div>
                 
                 <div class="reservation-summary" id="reservation-summary"></div>
@@ -485,6 +491,14 @@
                         <div id="adjust-history-list"></div>
                     </div>
                 </div>
+
+                <button class="btn btn-danger btn-large" onclick="closeCashShift()" style="margin-top:24px;width:100%;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Cerrar Turno
+                </button>
             </div>
 
             <!-- OPERACIONES -->
@@ -1044,6 +1058,18 @@
         .channel-monthly-label { font-size: 0.75rem; color: var(--gray-400); }
         .channel-error-msg { background: var(--danger-light); color: var(--danger); border-radius: var(--radius); padding: var(--space-2) var(--space-3); font-size: 0.8rem; margin-top: var(--space-2); }
         .channel-card-footer { padding: var(--space-3) var(--space-4) var(--space-4); display: flex; gap: var(--space-2); }
+
+        /* ── WIZARD PROGRESS ── */
+        .wizard-progress { display: flex; gap: 0; padding: 0 0 24px; align-items: center; margin-bottom: 24px; }
+        .wizard-step-item { flex: 1; text-align: center; position: relative; }
+        .wizard-step-item .wstep-num { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; border: 2px solid var(--gray-300); color: var(--gray-500); transition: all 0.3s; }
+        .wizard-step-item .wstep-label { font-size: 0.75rem; font-weight: 700; color: var(--gray-500); }
+        .wizard-step-item.active .wstep-num { background: var(--primary); border-color: var(--primary); color: white; }
+        .wizard-step-item.active .wstep-label { color: var(--primary); }
+        .wizard-step-item.done .wstep-num { background: var(--green); border-color: var(--green); color: white; }
+        .wizard-step-item.done .wstep-label { color: var(--green); }
+        .wizard-step-line { flex: 1; height: 2px; background: var(--gray-300); margin-bottom: 28px; transition: background 0.3s; }
+        .wizard-step-line.done { background: var(--green); }
     </style>
 
     <div id="toast-container" class="toast-container"></div>
@@ -1058,6 +1084,49 @@
 <script src="js/finances.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/channels.js"></script>
+
+<!-- Funciones para mejoras de interfaz -->
+<script>
+// Cerrar turno de caja
+function closeCashShift() {
+  if (!confirm('¿Confirmar cierre de turno? Se registrará el balance actual.')) return;
+  const balanceEl = document.getElementById('current-cash-balance');
+  const balance = balanceEl ? parseFloat(balanceEl.textContent.replace('$', '').replace(',', '')) : 0;
+  const msg = `Turno cerrado. Balance final: $${balance.toFixed(2)}`;
+  if (typeof showToast === 'function') {
+    showToast(msg, 'success');
+  } else {
+    alert(msg);
+  }
+}
+
+// Actualizar barra de progreso del wizard
+function updateWizardProgress(step) {
+  for (let i = 1; i <= 3; i++) {
+    const stepEl = document.getElementById('wstep' + i);
+    const lineEl = document.getElementById('wline' + i);
+    if (stepEl) {
+      stepEl.classList.remove('active', 'done');
+      if (i < step) {
+        stepEl.classList.add('done');
+        if (lineEl) lineEl.classList.add('done');
+      } else if (i === step) {
+        stepEl.classList.add('active');
+      }
+    }
+  }
+}
+
+// Interceptar goToStep para actualizar el wizard progress
+const originalGoToStep = typeof goToStep === 'function' ? goToStep : null;
+if (window.goToStep) {
+  const oldGoToStep = window.goToStep;
+  window.goToStep = function(step) {
+    updateWizardProgress(step);
+    return oldGoToStep.call(this, step);
+  };
+}
+</script>
 </body>
 </html>
 
