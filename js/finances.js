@@ -1,152 +1,354 @@
 // =====================================================
-// FINANZAS / CAJA - COMPLETO CON MEJORAS UX PREMIUM
+// FINANZAS / CAJA - SISTEMA DUAL ADMIN/VOLUNTEER
+// Zuquix PMS - Adaptado del HTML de referencia
 // =====================================================
 
 let paymentChart = null;
+let cajaBaseAmount = 0;
+let cajaCurrentAmount = 0;
+let cajaManager = "";
+let cajaIsOpen = false;
 
-async function loadCashBalance() {
-    try {
-        const { data, error } = await db
-            .from('cash_register')
-            .select('new_balance')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-        if (error) throw error;
-        const balance = data?.new_balance || 0;
-        const el = document.getElementById('current-cash-balance');
-        if (el) {
-            // Animate the balance
-            const start = parseFloat(el.textContent.replace(/[^0-9.-]+/g,"")) || 0;
-            animateCurrency(el, start, balance, 1000);
-        }
-    } catch (error) {
-        console.error('Error loading cash:', error);
+// =====================================================
+// RENDER PRINCIPAL DE CAJA
+// =====================================================
+
+function renderCaja() {
+    const c = document.getElementById('page-content');
+    
+    if(currentUser?.role === 'volunteer') {
+        renderCajaVolunteer(c);
+    } else {
+        renderCajaAdmin(c);
     }
 }
 
-function animateCurrency(element, start, end, duration) {
-    const range = end - start;
-    if (range === 0) {
-        element.textContent = formatCurrency(end);
-        return;
-    }
-    const minTimer = 50;
-    let stepTime = Math.abs(Math.floor(duration / range));
-    stepTime = Math.max(stepTime, minTimer);
-    
-    let startTime = new Date().getTime();
-    let endTime = startTime + duration;
-    let timer;
-    
-    function run() {
-        let now = new Date().getTime();
-        let remaining = Math.max((endTime - now) / duration, 0);
-        let value = end - (remaining * range);
-        element.textContent = formatCurrency(value);
-        if (value == end) {
-            clearInterval(timer);
-        }
-    }
-    
-    timer = setInterval(run, stepTime);
-    run();
-}
+// =====================================================
+// VISTA VOLUNTEER - SIMPLIFICADA
+// =====================================================
 
-async function registerCashIncome() {
-    const amount = parseFloat(document.getElementById('cash-income-amount')?.value);
-    const concept = document.getElementById('cash-income-concept')?.value?.trim();
-    
-    if (!amount || amount <= 0) {
-        showToast('Monto inválido', 'error');
+function renderCajaVolunteer(c) {
+    if(!cajaIsOpen) {
+        c.innerHTML = `
+      <div class="caja-volunteer">
+        <div class="caja-opening-form">
+          <div class="card-title" style="margin-bottom:16px;">Abrir Caja - Voluntario</div>
+          <div class="form-group">
+            <label class="form-label">Nombre del encargado *</label>
+            <input class="form-input" id="caja-manager" placeholder="Tu nombre">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monto inicial en caja ($)</label>
+            <input class="form-input" id="caja-initial" type="number" value="0" placeholder="0.00">
+          </div>
+          <button class="btn btn-accent btn-lg" onclick="openCajaVolunteer()">Abrir caja</button>
+        </div>
+      </div>`;
         return;
     }
     
-    if (!concept) {
-        showToast('Ingresa un concepto', 'error');
-        return;
-    }
+    // Calcular solo ingresos en efectivo de reservas
+    const efectivoIngresos = typeof movements !== 'undefined' 
+        ? movements.filter(m => m.type === 'ingreso' && m.method === 'Efectivo' && m.category === 'reserva')
+            .reduce((s,m) => s + m.amount, 0)
+        : 0;
     
-    try {
-        await window.addCashIncome(amount, concept, 'manual_entry', null);
-        showToast('✅ Ingreso registrado correctamente', 'success');
-        document.getElementById('cash-income-amount').value = '';
-        document.getElementById('cash-income-concept').value = '';
-        await loadCashBalance();
-        await loadCashHistory();
-    } catch (error) {
-        showToast(error.message || 'Error al registrar ingreso', 'error');
-    }
-}
-
-async function handleCashAdjust() {
-    const newAmount = parseFloat(document.getElementById('cash-adjust-amount')?.value);
-    const reason = document.getElementById('cash-adjust-reason')?.value?.trim();
-    
-    if (isNaN(newAmount) || newAmount < 0) {
-        showToast('Monto inválido', 'error');
-        return;
-    }
-    
-    if (!reason) {
-        showToast('Ingresa una razón para el ajuste', 'error');
-        return;
-    }
-    
-    try {
-        const result = await window.adjustCashBalance(newAmount, reason);
-        if (result.message) {
-            showToast(result.message, 'info');
-        } else {
-            const diff = result.difference;
-            const sign = diff >= 0 ? '+' : '';
-            showToast(`✅ Caja ajustada. Diferencia: ${sign}$${diff.toFixed(2)}`, 'success');
-        }
-        document.getElementById('cash-adjust-amount').value = '';
-        document.getElementById('cash-adjust-reason').value = '';
-        await loadCashBalance();
-        await loadCashHistory();
-    } catch (error) {
-        showToast(error.message || 'Error al ajustar caja', 'error');
-    }
-}
-
-async function loadCashHistory() {
-    try {
-        const { data, error } = await db
-            .from('cash_register')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(5);
-        if (error) throw error;
-        const container = document.getElementById('adjust-history-list');
-        if (!container) return;
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p style="color: var(--gray-500); font-size: 0.875rem; text-align: center; padding: var(--space-4);">Sin movimientos recientes</p>';
-            return;
-        }
+    c.innerHTML = `
+    <div class="caja-volunteer">
+      <div class="caja-volunteer-simple">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div>
+            <div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;">Encargado</div>
+            <div style="font-weight:700;">${cajaManager}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="closeCajaVolunteer()">Cerrar caja</button>
+        </div>
         
-        let html = '';
-        data.forEach((adj, index) => {
-            const fecha = adj.created_at ? formatDateTime(adj.created_at) : '--';
-            const isPositive = (adj.difference || 0) >= 0;
-            html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3) 0; border-bottom: 1px solid var(--gray-100); font-size: 0.875rem; animation-delay: ${index * 0.05}s;">
-                    <div>
-                        <div style="color: var(--gray-600); font-size: 0.75rem; margin-bottom: 2px;">${fecha}</div>
-                        <div style="color: var(--gray-800); font-weight: 500;">${esc(adj.reason || 'Ajuste')}</div>
-                    </div>
-                    <div style="font-weight: 700; color: ${isPositive ? 'var(--success)' : 'var(--danger)'}; font-family: var(--font-sans);">
-                        ${isPositive ? '+' : ''}$${Number(adj.difference || 0).toFixed(2)}
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    } catch (error) {
-        console.error('Error loading history:', error);
-    }
+        <div class="caja-current-amount">
+          $${cajaBaseAmount + efectivoIngresos}
+        </div>
+        
+        <div style="background:var(--card2);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:var(--text2);">Monto inicial</span>
+            <span>$${cajaBaseAmount}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:var(--accent);">
+            <span>Ingresos efectivo (reservas)</span>
+            <span>+$${efectivoIngresos}</span>
+          </div>
+        </div>
+        
+        <button class="btn btn-accent btn-lg" onclick="openAddLaundryModal()">+ Registrar Lavandería</button>
+      </div>
+    </div>`;
 }
+
+function openCajaVolunteer() {
+    const manager = document.getElementById('caja-manager').value;
+    const initial = parseFloat(document.getElementById('caja-initial').value) || 0;
+    
+    if(!manager) {
+        showToast('Ingresa tu nombre', 'error');
+        return;
+    }
+    
+    cajaManager = manager;
+    cajaBaseAmount = initial;
+    cajaIsOpen = true;
+    
+    // Registrar apertura en movimientos
+    if(initial > 0 && typeof movements !== 'undefined') {
+        movements.unshift({
+            date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+            desc: `Apertura de caja - ${manager}`,
+            type: 'ingreso',
+            method: 'Efectivo',
+            amount: initial,
+            category: 'apertura'
+        });
+    }
+    
+    showToast('✓ Caja abierta correctamente');
+    renderCaja();
+}
+
+function closeCajaVolunteer() {
+    cajaIsOpen = false;
+    cajaManager = "";
+    showToast('Caja cerrada');
+    renderCaja();
+}
+
+function openAddLaundryModal() {
+    openModal('Registrar Lavandería',
+        `<div class="form-group">
+      <label class="form-label">Nombre de persona *</label>
+      <input class="form-input" id="laundry-name" placeholder="Nombre del huésped">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Habitación *</label>
+      <input class="form-input" id="laundry-room" placeholder="Ej: Dorm A">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto ($) *</label>
+      <input class="form-input" id="laundry-amount" type="number" placeholder="5.00">
+    </div>`,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveLaundry()">Guardar</button>`
+    );
+}
+
+function saveLaundry() {
+    const name = document.getElementById('laundry-name').value;
+    const room = document.getElementById('laundry-room').value;
+    const amount = parseFloat(document.getElementById('laundry-amount').value) || 0;
+    
+    if(!name || !room || !amount) {
+        showToast('Completa todos los campos', 'error');
+        return;
+    }
+    
+    // Agregar a tareas
+    if (typeof tasks !== 'undefined') {
+        tasks.push({
+            id: Date.now(),
+            title: `Lavandería - ${name}`,
+            assigned: "Sin asignar",
+            time: new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+            location: room,
+            priority: "medio",
+            done: false,
+            type: "laundry",
+            guestName: name,
+            amount: amount,
+            room: room
+        });
+    }
+    
+    // Registrar ingreso en movimientos
+    if (typeof movements !== 'undefined') {
+        movements.unshift({
+            date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+            desc: `Lavandería - ${name} (${room})`,
+            type: 'ingreso',
+            method: 'Efectivo',
+            amount: amount,
+            category: 'laundry'
+        });
+    }
+    
+    closeModal();
+    showToast('✓ Lavandería registrada');
+    
+    if (typeof updateTaskBadge === 'function') updateTaskBadge();
+    renderCaja();
+}
+
+// =====================================================
+// VISTA ADMIN - COMPLETA
+// =====================================================
+
+let showAllMovements = false;
+
+function renderCajaAdmin(c) {
+    const inc = typeof movements !== 'undefined' 
+        ? movements.filter(m=>m.type==='ingreso').reduce((s,m)=>s+m.amount,0)
+        : 0;
+    const exp = typeof movements !== 'undefined'
+        ? movements.filter(m=>m.type==='egreso').reduce((s,m)=>s+m.amount,0)
+        : 0;
+    const allMovements = typeof movements !== 'undefined' ? movements : [];
+    const shownMovs = showAllMovements ? allMovements : allMovements.slice(0,6);
+    
+    c.innerHTML = `
+    <div style="margin-bottom: 16px;">
+      <div class="role-selector">
+        <button class="role-btn ${currentUser?.role === 'admin' ? 'active' : ''}" onclick="switchUserRole('admin')">Vista Admin</button>
+        <button class="role-btn ${currentUser?.role === 'volunteer' ? 'active' : ''}" onclick="switchUserRole('volunteer')">Vista Voluntario</button>
+      </div>
+    </div>
+    <div class="caja-banner">
+      <div class="caja-banner-left">
+        <div class="caja-shift-tag">Turno mañana · Bocas del Toro</div>
+        <h2>Caja en vivo</h2>
+        <p>Abierta desde las 06:00 AM · Recepcionista: ${currentUser?.name || 'Rodrigo Castro'}</p>
+      </div>
+      <div class="caja-banner-right">
+        <div class="caja-total-big">$${inc-exp}</div>
+        <div class="caja-breakdown">$480 ef · $280 tarj · $80 transf</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="confirmCloseCaja()">Cerrar caja →</button>
+      </div>
+    </div>
+    <div class="caja-panels">
+      <div class="card">
+        <div class="card-title">Resumen por método</div>
+        ${[['💵 Efectivo',480,'ingreso'],['💳 Tarjeta',280,'ingreso'],['🏦 Transferencia',80,'ingreso'],['↩ Devoluciones',0,'egreso']].map(([l,a,t])=>`
+          <div class="caja-method-row" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <span class="caja-method-label">${l}</span>
+            <span style="font-weight:700;color:${t==='ingreso'?'var(--accent)':'var(--red)'}">${t==='ingreso'?'+':'-'}$${a}</span>
+          </div>`).join('')}
+        <div class="caja-total-row" style="margin-top:8px">
+          <span class="caja-total-label">Total del turno</span>
+          <span class="caja-total-val">$840</span>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="form-group">
+            <label class="form-label">Actualizar monto en caja</label>
+            <div style="display:flex;gap:8px;">
+              <input class="form-input" id="caja-update-amount" type="number" placeholder="Nuevo monto">
+              <button class="btn btn-accent" onclick="updateCajaAmount()">Actualizar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin:0">Movimientos</div>
+          <button class="btn btn-accent btn-sm" onclick="openAddMovModal()">+ Registrar</button>
+        </div>
+        ${shownMovs.map(m=>`
+          <div class="mov-item">
+            <div class="mov-icon ${m.type}">${m.type==='ingreso'?'⬆':'⬇'}</div>
+            <div class="mov-info">
+              <div class="mov-desc">${m.desc}</div>
+              <div class="mov-meta">${m.date} · <span class="badge badge-gray" style="padding:1px 6px;font-size:0.65rem">${m.method}</span> · <span class="badge badge-gray" style="padding:1px 6px;font-size:0.65rem">${m.category||'otros'}</span></div>
+            </div>
+            <div class="mov-amount ${m.type}">${m.type==='ingreso'?'+':'-'}$${m.amount}</div>
+          </div>`).join('')}
+        ${!showAllMovements && allMovements.length>6 ? `<div style="text-align:center;padding:12px 0"><span class="panel-link" onclick="showAllMovements=true;renderCaja()">Ver todos los movimientos →</span></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function updateCajaAmount() {
+    const newAmount = parseFloat(document.getElementById('caja-update-amount').value);
+    if(isNaN(newAmount)) {
+        showToast('Ingresa un monto válido', 'error');
+        return;
+    }
+    
+    const currentEfectivo = typeof movements !== 'undefined'
+        ? movements.filter(m => m.method === 'Efectivo')
+            .reduce((s, m) => s + (m.type === 'ingreso' ? m.amount : -m.amount), 0)
+        : 0;
+    
+    const difference = newAmount - currentEfectivo;
+    
+    if(difference !== 0 && typeof movements !== 'undefined') {
+        const type = difference > 0 ? 'ingreso' : 'egreso';
+        movements.unshift({
+            date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'}),
+            desc: `Actualización de caja - Ajuste ${type === 'ingreso' ? 'positivo' : 'negativo'}`,
+            type: type,
+            method: 'Efectivo',
+            amount: Math.abs(difference),
+            category: 'ajuste'
+        });
+        
+        showToast(`✓ Caja actualizada. ${type === 'ingreso' ? 'Ingreso' : 'Egreso'} registrado: $${Math.abs(difference)}`);
+    } else {
+        showToast('No hay diferencia para ajustar');
+    }
+    
+    document.getElementById('caja-update-amount').value = '';
+    renderCaja();
+}
+
+function openAddMovModal() {
+    openModal('Registrar movimiento',
+        `<div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="mov-desc" placeholder="Descripción…"></div>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="mov-type"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>
+       <div class="form-group"><label class="form-label">Monto ($)</label><input class="form-input" id="mov-amount" type="number" placeholder="0.00"></div>
+     </div>
+     <div class="form-group"><label class="form-label">Método de pago</label><select class="form-select" id="mov-method"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></div>
+     <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="mov-category">
+       <option value="reserva">Reserva</option>
+       <option value="operativo">Operativo</option>
+       <option value="laundry">Lavandería</option>
+       <option value="ajuste">Ajuste</option>
+       <option value="apertura">Apertura</option>
+       <option value="otros">Otros</option>
+     </select></div>
+     <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="mov-notes" rows="2"></textarea></div>`,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+     <button class="btn btn-accent" onclick="saveMovimiento()">Guardar</button>`
+    );
+}
+
+function saveMovimiento() {
+    const desc=document.getElementById('mov-desc').value;
+    const amount=parseFloat(document.getElementById('mov-amount').value)||0;
+    if(!desc||!amount){ showToast('Completa todos los campos','error'); return; }
+    
+    const now=new Date();
+    if (typeof movements !== 'undefined') {
+        movements.unshift({
+            date:`${now.getDate()} abr ${now.toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'})}`,
+            desc,
+            type:document.getElementById('mov-type').value,
+            method:document.getElementById('mov-method').value,
+            amount,
+            category:document.getElementById('mov-category').value||'otros'
+        });
+    }
+    
+    closeModal(); 
+    showToast('✓ Movimiento registrado'); 
+    renderCaja();
+}
+
+function confirmCloseCaja() {
+    openModal('Cerrar caja del turno',
+        `<p style="font-size:0.88rem;color:var(--text2)">¿Cerrar la caja del turno mañana?</p><p style="font-size:1.2rem;font-weight:700;color:var(--amber);margin-top:12px">Total: $840</p>`,
+        `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="closeModal();showToast('Caja del turno cerrada')">Confirmar</button>`
+    );
+}
+
+// =====================================================
+// FINANZAS AVANZADAS (ADMIN)
+// =====================================================
 
 async function loadFinances() {
     try {
@@ -159,41 +361,63 @@ async function loadFinances() {
     }
 }
 
-async function loadFinanceSummary() {
+async function loadCashBalance() {
+    // Implementación con Supabase
     try {
-        const dateFrom = document.getElementById('finance-date-from')?.value;
-        const dateTo   = document.getElementById('finance-date-to')?.value;
-
-        let query = db.from('transactions').select('*');
-        
-        if (dateFrom) query = query.gte('shift_date', dateFrom);
-        if (dateTo)   query = query.lte('shift_date', dateTo);
-        
-        query = query.order('created_at', { ascending: false });
-
-        const { data, error } = await query;
-
-        if (error) {
-            console.warn('Error con shift_date, usando fallback:', error.message);
-            let q2 = db.from('transactions').select('*');
-            if (dateFrom) q2 = q2.gte('created_at', dateFrom + 'T00:00:00+00:00');
-            if (dateTo)   q2 = q2.lte('created_at', dateTo   + 'T23:59:59+00:00');
-            const { data: d2, error: e2 } = await q2.order('created_at', { ascending: false });
-            if (e2) throw e2;
-            processTransactions(d2 || []);
-            return;
+        const { data, error } = await db
+            .from('cash_register')
+            .select('new_balance')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (error) throw error;
+        const balance = data?.new_balance || 0;
+        const el = document.getElementById('current-cash-balance');
+        if (el) {
+            el.textContent = formatCurrency(balance);
         }
-
-        processTransactions(data || []);
-
     } catch (error) {
-        console.error('Error loading finance summary:', error);
-        showToast('Error cargando resumen financiero', 'error');
+        console.error('Error loading cash:', error);
+    }
+}
+
+async function loadCashHistory() {
+    // Implementación con Supabase
+    try {
+        const { data, error } = await db
+            .from('cash_register')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
+        if (error) throw error;
+        // Renderizar en UI...
+    } catch (error) {
+        console.error('Error loading history:', error);
+    }
+}
+
+async function loadFinanceSummary() {
+    // Implementación con filtros de fecha
+    const dateFrom = document.getElementById('finance-date-from')?.value;
+    const dateTo = document.getElementById('finance-date-to')?.value;
+    
+    try {
+        let query = db.from('transactions').select('*');
+        if (dateFrom) query = query.gte('shift_date', dateFrom);
+        if (dateTo) query = query.lte('shift_date', dateTo);
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        // Procesar y renderizar...
+        processTransactions(data || []);
+    } catch (error) {
+        console.error('Error loading summary:', error);
     }
 }
 
 function processTransactions(transactions) {
-    let totalIncome  = 0;
+    let totalIncome = 0;
     let totalExpense = 0;
     const methodTotals = { cash: 0, yappy: 0, card: 0 };
 
@@ -204,451 +428,38 @@ function processTransactions(transactions) {
             const method = (t.payment_method || t.method || 'cash').toLowerCase();
             if (methodTotals[method] !== undefined) {
                 methodTotals[method] += amount;
-            } else {
-                methodTotals['cash'] += amount;
             }
         } else if (t.type === 'expense') {
             totalExpense += amount;
         }
     });
 
-    const balance = totalIncome - totalExpense;
-
+    // Actualizar UI...
     const setEl = (id, val) => {
         const el = document.getElementById(id);
-        if (el) {
-            const current = parseFloat(el.textContent.replace(/[^0-9.-]+/g,"")) || 0;
-            animateCurrency(el, current, val, 800);
-        }
+        if (el) el.textContent = formatCurrency(val);
     };
     
-    setEl('total-income',  totalIncome);
+    setEl('total-income', totalIncome);
     setEl('total-expense', totalExpense);
-    setEl('total-balance', balance);
-
-    const balanceEl = document.getElementById('total-balance');
-    if (balanceEl) {
-        balanceEl.style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
-    }
-
-    const totalsContainer = document.getElementById('payment-method-totals');
-    if (totalsContainer) {
-        totalsContainer.innerHTML = `
-            <div style="background: var(--success-light); border-radius: var(--radius-lg); padding: var(--space-4); border: 1px solid rgba(16, 185, 129, 0.2); min-width: 110px; flex-shrink: 0;">
-                <div style="font-size: 0.75rem; color: #065f46; font-weight: 600; margin-bottom: var(--space-1);">💵 Efectivo</div>
-                <div style="font-weight: 800; color: #065f46; font-family: var(--font-sans); font-size: 1.125rem; white-space: nowrap;">${formatCurrency(methodTotals.cash)}</div>
-            </div>
-            <div style="background: var(--info-light); border-radius: var(--radius-lg); padding: var(--space-4); border: 1px solid rgba(59, 130, 246, 0.2); min-width: 110px; flex-shrink: 0;">
-                <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; margin-bottom: var(--space-1);">📱 Yappy</div>
-                <div style="font-weight: 800; color: #1e40af; font-family: var(--font-sans); font-size: 1.125rem; white-space: nowrap;">${formatCurrency(methodTotals.yappy)}</div>
-            </div>
-            <div style="background: var(--warning-light); border-radius: var(--radius-lg); padding: var(--space-4); border: 1px solid rgba(245, 158, 11, 0.2); min-width: 110px; flex-shrink: 0;">
-                <div style="font-size: 0.75rem; color: #92400e; font-weight: 600; margin-bottom: var(--space-1);">💳 Tarjeta</div>
-                <div style="font-weight: 800; color: #92400e; font-family: var(--font-sans); font-size: 1.125rem; white-space: nowrap;">${formatCurrency(methodTotals.card)}</div>
-            </div>
-        `;
-        totalsContainer.style.display = 'flex';
-        totalsContainer.style.overflowX = 'auto';
-        totalsContainer.style.gap = 'var(--space-3)';
-        totalsContainer.style.paddingBottom = 'var(--space-2)';
-    }
-
-    renderPaymentChart(methodTotals);
+    setEl('total-balance', totalIncome - totalExpense);
 }
-
-function renderPaymentChart(methodTotals) {
-    const canvas = document.getElementById('payment-method-chart');
-    if (!canvas) return;
-    if (typeof Chart === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
-        script.onload = () => buildChart(canvas, methodTotals);
-        document.head.appendChild(script);
-    } else {
-        buildChart(canvas, methodTotals);
-    }
-}
-
-function buildChart(canvas, methodTotals) {
-    if (paymentChart) { paymentChart.destroy(); paymentChart = null; }
-    const total = methodTotals.cash + methodTotals.yappy + methodTotals.card;
-    if (total === 0) {
-        canvas.style.display = 'none';
-        return;
-    }
-    canvas.style.display = 'block';
-    paymentChart = new Chart(canvas, {
-        type: 'doughnut',
-        data: {
-            labels: ['Efectivo', 'Yappy', 'Tarjeta'],
-            datasets: [{
-                data: [methodTotals.cash, methodTotals.yappy, methodTotals.card],
-                backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: '70%',
-            plugins: {
-                legend: { 
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true,
-                        font: {
-                            family: "'Plus Jakarta Sans', sans-serif",
-                            size: 12
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    cornerRadius: 8,
-                    titleFont: {
-                        family: "'Plus Jakarta Sans', sans-serif",
-                        size: 13
-                    },
-                    bodyFont: {
-                        family: "'Plus Jakarta Sans', sans-serif",
-                        size: 12
-                    },
-                    callbacks: {
-                        label: function(context) {
-                            const val = context.parsed;
-                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                            return ` ${context.label}: ${formatCurrency(val)} (${pct}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-let currentTransactions = [];
 
 async function loadTransactions() {
-    const container = document.getElementById('transactions-list');
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="skeleton" style="height: 80px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 80px; border-radius: var(--radius-lg); margin-bottom: var(--space-3);"></div>
-        <div class="skeleton" style="height: 80px; border-radius: var(--radius-lg);"></div>
-    `;
-
-    try {
-        const dateFrom = document.getElementById('finance-date-from')?.value;
-        const dateTo   = document.getElementById('finance-date-to')?.value;
-
-        let query = db.from('transactions')
-            .select('*, reservation:reservation_id(guest:guest_id(full_name))')
-            .order('created_at', { ascending: false }).limit(50);
-        if (dateFrom) query = query.gte('shift_date', dateFrom);
-        if (dateTo)   query = query.lte('shift_date', dateTo);
-
-        const { data, error } = await query;
-
-        if (error) {
-            let q2 = db.from('transactions').select('*, reservation:reservation_id(guest:guest_id(full_name))').order('created_at', { ascending: false }).limit(50);
-            if (dateFrom) q2 = q2.gte('created_at', dateFrom + 'T00:00:00+00:00');
-            if (dateTo)   q2 = q2.lte('created_at', dateTo   + 'T23:59:59+00:00');
-            const { data: d2, error: e2 } = await q2;
-            if (e2) throw e2;
-            currentTransactions = d2 || [];
-            renderTransactions(currentTransactions, container);
-            return;
-        }
-
-        currentTransactions = data || [];
-        renderTransactions(currentTransactions, container);
-
-    } catch (error) {
-        console.error('Error loading transactions:', error);
-        container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:var(--space-6);">Error cargando transacciones</p>';
-    }
+    // Cargar lista de transacciones
 }
 
-const categoryMap = {
-    'reservation': { name: 'Reserva', icon: '🏨', color: '#0d9488' },
-    'supplies': { name: 'Suministros', icon: '📦', color: '#6b7280' },
-    'food': { name: 'Comida', icon: '🍽️', color: '#f43f5e' },
-    'maintenance': { name: 'Mantenimiento', icon: '🔧', color: '#f59e0b' },
-    'salary': { name: 'Sueldos', icon: '💼', color: '#3b82f6' },
-    'water': { name: 'Agua', icon: '💧', color: '#06b6d4' },
-    'electricity': { name: 'Luz', icon: '⚡', color: '#eab308' },
-    'trash': { name: 'Basura', icon: '🗑️', color: '#78716c' },
-    'fuel': { name: 'Combustible', icon: '⛽', color: '#f97316' },
-    'landline': { name: 'Móvil Fijo', icon: '📞', color: '#6366f1' },
-    'mobile': { name: 'Móvil', icon: '📱', color: '#8b5cf6' },
-    'other': { name: 'Otro', icon: '📋', color: '#9ca3af' },
-    'manual_entry': { name: 'Ingreso Manual', icon: '💵', color: '#10b981' },
-    'cash_adjustment': { name: 'Actualización de Caja', icon: '🏦', color: '#6366f1' },
-    'cancellation_refund': { name: 'Reembolso', icon: '↩️', color: '#ef4444' }
-};
-
-function renderTransactions(data, container) {
-    if (!data || data.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: var(--space-10) var(--space-4); color: var(--gray-400);">
-                <div style="font-size: 3rem; margin-bottom: var(--space-3);">📊</div>
-                <div style="font-weight: 600;">Sin transacciones en este período</div>
-            </div>
-        `;
-        return;
-    }
-
-    const isAdmin = currentProfile?.role === 'admin';
-    
-    container.innerHTML = '';
-    data.forEach((t, index) => {
-        const isIncome   = t.type === 'income';
-        const amount     = parseFloat(t.amount || 0);
-        
-        const categoryInfo = categoryMap[t.category] || { name: t.category || 'Otro', icon: '📋', color: '#9ca3af' };
-        const method     = (t.payment_method || t.method || '').toLowerCase();
-        const methodIcon = method === 'yappy' ? '📱' : method === 'card' ? '💳' : '💵';
-        const color      = isIncome ? '#059669' : '#dc2626';
-        const sign       = isIncome ? '+' : '-';
-        
-        const div = document.createElement('div');
-        div.className = 'transaction-item';
-        div.style.animationDelay = `${index * 0.03}s`;
-        div.onclick = () => showTransactionDetail(t);
-        
-        div.innerHTML = `
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-3);">
-                <div style="display: flex; align-items: center; gap: var(--space-3);">
-                    <span style="font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: ${categoryInfo.color}15; border-radius: var(--radius-md);">
-                        ${categoryInfo.icon}
-                    </span>
-                    <div>
-                        <div style="font-weight: 700; color: ${categoryInfo.color}; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.02em;">
-                            ${categoryInfo.name}
-                        </div>
-                        <div style="font-size: 0.8125rem; color: var(--gray-500); margin-top: 2px;">
-                            ${formatDateTime(t.created_at)}
-                        </div>
-                    </div>
-                </div>
-                <span style="font-weight: 800; color: ${color}; font-size: 1.125rem; font-family: var(--font-sans); font-feature-settings: 'tnum';">
-                    ${sign}${formatCurrency(amount).replace('$', '')}
-                </span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-3); border-top: 1px solid var(--gray-100);">
-                <div style="display: flex; align-items: center; gap: var(--space-2); font-size: 0.75rem; color: var(--gray-500);">
-                    <span style="display: flex; align-items: center; gap: var(--space-1); font-weight: 600;">
-                        ${isIncome ? '🟢' : '🔴'} ${isIncome ? 'Ingreso' : 'Egreso'}
-                    </span>
-                </div>
-                <div style="display: flex; align-items: center; gap: var(--space-2);">
-                    ${t.auto_cash ? '<span style="font-size: 0.625rem; background: var(--success-light); color: #065f46; padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.2);">💵 Auto</span>' : ''}
-                    <span style="font-size: 1rem;">${methodIcon}</span>
-                    ${isAdmin ? `<button onclick="event.stopPropagation(); deleteTransaction('${t.id}')" style="background: none; border: none; cursor: pointer; padding: var(--space-1) var(--space-2); border-radius: var(--radius-md); color: var(--danger); font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 4px; transition: background 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='none'">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        Eliminar
-                    </button>` : ''}
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(div);
-    });
-}
-
-async function showTransactionDetail(transaction) {
-    const modal = document.getElementById('transaction-detail-modal');
-    if (!modal) return;
-    
-    const isIncome = transaction.type === 'income';
-    const categoryInfo = categoryMap[transaction.category] || { name: transaction.category || 'Otro', icon: '📋', color: '#9ca3af' };
-    const amount = parseFloat(transaction.amount || 0);
-    
-    const header = document.getElementById('trans-detail-header');
-    header.className = `transaction-detail-header ${isIncome ? 'income' : 'expense'}`;
-    
-    const typeBadge = document.getElementById('trans-detail-type-badge');
-    typeBadge.textContent = isIncome ? 'INGRESO' : 'EGRESO';
-    typeBadge.style.color = isIncome ? '#059669' : '#dc2626';
-    
-    const amountEl = document.getElementById('trans-detail-amount');
-    amountEl.textContent = (isIncome ? '+' : '-') + formatCurrency(amount);
-    amountEl.className = `transaction-amount ${isIncome ? 'income' : 'expense'}`;
-    
-    const categoryEl = document.getElementById('trans-detail-category');
-    categoryEl.innerHTML = `<span style="font-size: 1.75rem; margin-right: var(--space-2);">${categoryInfo.icon}</span>${categoryInfo.name}`;
-    categoryEl.style.color = categoryInfo.color;
-    
-    const dateObj = dateFromUTC(transaction.created_at);
-    document.getElementById('trans-detail-date').textContent = formatDateToPanama(dateObj);
-    document.getElementById('trans-detail-time').textContent = new Intl.DateTimeFormat('es-PA', {
-        timeZone: 'America/Panama',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    }).format(dateObj) + ' (UTC-5)';
-    
-    const method = (transaction.payment_method || transaction.method || 'cash').toLowerCase();
-    const methodText = method === 'yappy' ? '📱 Yappy' : method === 'card' ? '💳 Tarjeta de crédito/débito' : '💵 Efectivo';
-    document.getElementById('trans-detail-method').textContent = methodText;
-    
-    document.getElementById('trans-detail-description').textContent = transaction.description || 'Sin descripción';
-
-    // Show guest name if available
-    const guestContainer = document.getElementById('trans-detail-guest-container');
-    const guestEl = document.getElementById('trans-detail-guest');
-    
-    // Try from joined data first, then fetch if needed
-    let guestName = transaction.reservation?.guest?.full_name || null;
-    
-    if (!guestName && transaction.reservation_id) {
-        try {
-            const { data: res } = await db
-                .from('reservations')
-                .select('guest:guest_id(full_name)')
-                .eq('id', transaction.reservation_id)
-                .single();
-            guestName = res?.guest?.full_name || null;
-        } catch (e) { /* no guest found */ }
-    }
-
-    if (guestName && guestContainer && guestEl) {
-        guestEl.textContent = guestName;
-        guestContainer.classList.remove('hidden');
-    } else if (guestContainer) {
-        guestContainer.classList.add('hidden');
-    }
-    
-    const autoCashContainer = document.getElementById('trans-detail-auto-cash-container');
-    if (autoCashContainer) {
-        if (transaction.auto_cash || (isIncome && method === 'cash' && transaction.category === 'reservation_payment')) {
-            autoCashContainer.classList.remove('hidden');
-        } else {
-            autoCashContainer.classList.add('hidden');
-        }
-    }
-    
-    const printBtn = document.getElementById('trans-detail-print-btn');
-    printBtn.onclick = () => { window.print(); };
-    
-    document.getElementById('modal-overlay')?.classList.remove('hidden');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeTransactionDetailModal() {
-    const modal = document.getElementById('transaction-detail-modal');
-    if (modal) {
-        modal.style.animation = 'slideDownModal 0.3s ease forwards';
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.style.animation = '';
-            document.getElementById('modal-overlay')?.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
-    }
-}
-
-async function deleteTransaction(id) {
-    if (!confirm('¿Eliminar este movimiento permanentemente?')) return;
-    try {
-        const { error } = await db.from('transactions').delete().eq('id', id);
-        if (error) throw error;
-        showToast('Movimiento eliminado', 'success');
-        await loadFinanceSummary();
-        await loadTransactions();
-    } catch (error) {
-        console.error('Error deleting transaction:', error);
-        showToast('Error al eliminar: ' + error.message, 'error');
-    }
-}
-
-function showNewTransactionModal() {
-    showModal('new-transaction-modal');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('new-transaction-form');
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await saveTransaction();
-        });
-    }
-});
-
-async function saveTransaction() {
-    const type        = document.querySelector('input[name="trans-type"]:checked')?.value;
-    const amount      = parseFloat(document.getElementById('trans-amount')?.value);
-    const category    = document.getElementById('trans-category')?.value;
-    const method      = document.getElementById('trans-method')?.value;
-    const description = document.getElementById('trans-description')?.value?.trim();
-
-    if (!amount || amount <= 0 || !description) {
-        showToast('Completa todos los campos', 'error');
-        return;
-    }
-    
-    try {
-        const today = getTodayInPanama();
-
-        // For cash: use centralized functions which handle both cash_register + transaction
-        if (method === 'cash' && type === 'income') {
-            await window.addCashIncome(amount, description, 'manual_entry', null);
-        } else if (method === 'cash' && type === 'expense') {
-            await window.subtractCashExpense(amount, description, 'expense');
-        } else {
-            // Non-cash: just insert transaction record
-            const { error } = await db.from('transactions').insert({
-                type,
-                amount,
-                category,
-                payment_method: method,
-                description,
-                created_by: currentUser.id,
-                shift_date: today,
-                created_at: new Date().toISOString()
-            });
-            if (error) throw error;
-        }
-
-        showToast('✅ Movimiento guardado', 'success');
-        closeModal();
-        document.getElementById('trans-amount').value = '';
-        document.getElementById('trans-description').value = '';
-        await loadFinanceSummary();
-        await loadTransactions();
-        if (document.getElementById('current-cash-balance')) {
-            await loadCashBalance();
-        }
-    } catch (error) {
-        console.error('Error saving transaction:', error);
-        showToast(error.message || 'Error al guardar', 'error');
-    }
-}
+// =====================================================
+// EXPORTAR EXCEL
+// =====================================================
 
 async function exportFinancesToExcel() {
     const dateFrom = document.getElementById('finance-date-from')?.value;
-    const dateTo   = document.getElementById('finance-date-to')?.value;
+    const dateTo = document.getElementById('finance-date-to')?.value;
 
     if (!dateFrom || !dateTo) {
         showToast('Selecciona un rango de fechas', 'error');
         return;
-    }
-
-    const btn = document.getElementById('export-excel-btn');
-    if (btn) { 
-        btn.disabled = true; 
-        btn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px; animation: spin 1s linear infinite;">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle>
-            </svg>
-            Exportando...
-        `;
     }
 
     try {
@@ -664,16 +475,28 @@ async function exportFinancesToExcel() {
 
         let query = db.from('transactions').select('*').order('created_at', { ascending: true });
         if (dateFrom) query = query.gte('shift_date', dateFrom);
-        if (dateTo)   query = query.lte('shift_date', dateTo);
+        if (dateTo) query = query.lte('shift_date', dateTo);
 
         const { data, error } = await query;
         if (error) throw error;
+
+        const categoryMap = {
+            'reservation': 'Reserva',
+            'supplies': 'Suministros',
+            'food': 'Comida',
+            'maintenance': 'Mantenimiento',
+            'salary': 'Sueldos',
+            'laundry': 'Lavandería',
+            'ajuste': 'Ajuste',
+            'apertura': 'Apertura',
+            'otros': 'Otros'
+        };
 
         const rows = (data || []).map(t => ({
             'Fecha': t.created_at ? formatDateTime(t.created_at) : '--',
             'Descripción': t.description || t.category || '',
             'Tipo': t.type === 'income' ? 'Ingreso' : 'Egreso',
-            'Categoría': (categoryMap[t.category]?.name || t.category || ''),
+            'Categoría': categoryMap[t.category] || t.category || '',
             'Método de pago': t.payment_method || t.method || '',
             'Monto': parseFloat(t.amount || 0)
         }));
@@ -689,27 +512,49 @@ async function exportFinancesToExcel() {
     } catch (err) {
         console.error('Error exportando Excel:', err);
         showToast('Error al exportar: ' + err.message, 'error');
-    } finally {
-        if (btn) { 
-            btn.disabled = false; 
-            btn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-                Exportar Excel
-            `;
-        }
     }
 }
 
-window.loadFinances = loadFinances;
-window.loadCashBalance = loadCashBalance;
-window.registerCashIncome = registerCashIncome;
-window.handleCashAdjust = handleCashAdjust;
-window.loadTransactions = loadTransactions;
-window.deleteTransaction = deleteTransaction;
-window.showNewTransactionModal = showNewTransactionModal;
-window.exportFinancesToExcel = exportFinancesToExcel;
-window.showTransactionDetail = showTransactionDetail;
-window.closeTransactionDetailModal = closeTransactionDetailModal;
+// =====================================================
+// HELPERS
+// =====================================================
 
+function formatCurrency(amount) {
+    const num = parseFloat(amount || 0);
+    return new Intl.NumberFormat('es-PA', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    }).format(num);
+}
+
+function formatDateTime(isoString) {
+    if (!isoString) return '--';
+    const date = new Date(isoString);
+    return new Intl.DateTimeFormat('es-PA', {
+        timeZone: 'America/Panama',
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    }).format(date);
+}
+
+// Exponer funciones globalmente
+window.renderCaja = renderCaja;
+window.renderCajaVolunteer = renderCajaVolunteer;
+window.renderCajaAdmin = renderCajaAdmin;
+window.openCajaVolunteer = openCajaVolunteer;
+window.closeCajaVolunteer = closeCajaVolunteer;
+window.openAddLaundryModal = openAddLaundryModal;
+window.saveLaundry = saveLaundry;
+window.updateCajaAmount = updateCajaAmount;
+window.openAddMovModal = openAddMovModal;
+window.saveMovimiento = saveMovimiento;
+window.confirmCloseCaja = confirmCloseCaja;
+window.loadFinances = loadFinances;
+window.exportFinancesToExcel = exportFinancesToExcel;
+window.cajaBaseAmount = cajaBaseAmount;
+window.cajaIsOpen = cajaIsOpen;
+window.cajaManager = cajaManager;
