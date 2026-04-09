@@ -1,19 +1,21 @@
 // =====================================================
-// OPERACIONES / TAREAS - VERSIÓN FUSIÓN
+// OPERACIONES / TAREAS - VERSIÓN FUSIÓN COMPLETA
 // Zuquix PMS: Supabase + Funcionalidades HTML Nuevas
+// CORREGIDO: desc -> description
 // =====================================================
 
-// =====================================================
-// RENDER PRINCIPAL DE TAREAS (adaptado del HTML nuevo)
-// =====================================================
-
+// Variables globales
 let tareasFilter = 'todas';
+
+// =====================================================
+// RENDER PRINCIPAL DE TAREAS
+// =====================================================
 
 async function renderTareas() {
     const c = document.getElementById('page-content');
     if (!c) return;
     
-    // Mostrar skeleton mientras carga
+    // Skeleton loading
     c.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
             <div class="skeleton" style="width:300px;height:40px;border-radius:20px;"></div>
@@ -27,14 +29,12 @@ async function renderTareas() {
     const isAdmin = currentProfile?.role === 'admin';
     
     try {
-        // Consulta base
         let query = db
             .from('tasks')
             .select('*, room:room_id(number, name), assigned:assigned_to(full_name)')
             .order('priority', { ascending: false })
             .order('due_date');
             
-        // Filtros según selección
         if (tareasFilter === 'pendientes') {
             query = query.eq('status', 'pending');
         } else if (tareasFilter === 'completadas') {
@@ -42,7 +42,6 @@ async function renderTareas() {
         } else if (tareasFilter === 'laundry') {
             query = query.eq('type', 'laundry').eq('status', 'pending');
         } else {
-            // 'todas' - mostrar solo pendientes por defecto
             query = query.eq('status', 'pending');
         }
             
@@ -53,7 +52,6 @@ async function renderTareas() {
         const done = tasksData?.filter(t => t.status === 'completed').length || 0;
         const laundryCount = tasksData?.filter(t => t.type === 'laundry' && t.status === 'pending').length || 0;
         
-        // Renderizar filtros y lista
         c.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
                 <div class="filter-tabs" style="margin:0">
@@ -69,7 +67,6 @@ async function renderTareas() {
             </div>
         `;
         
-        // Cargar historial solo para admin
         if (isAdmin) {
             loadCleaningHistory();
             loadReports();
@@ -85,7 +82,6 @@ function renderTaskItem(t, index) {
     const isLaundry = t.type === 'laundry';
     const isDone = t.status === 'completed';
     
-    // Mapear prioridades del sistema antiguo al nuevo
     const priorityMap = {
         'high': 'urgente',
         'medium': 'medio', 
@@ -96,7 +92,6 @@ function renderTaskItem(t, index) {
     };
     const priority = priorityMap[t.priority] || 'medio';
     
-    // Estilos según tipo
     const cardStyle = isLaundry && !isDone 
         ? 'border-left: 3px solid var(--purple);' 
         : '';
@@ -164,18 +159,16 @@ function setTareasFilter(f) {
 }
 
 // =====================================================
-// NUEVA TAREA CON SISTEMA DE TIPOS (HTML nuevo)
+// MODALES DE TAREAS
 // =====================================================
 
 function openNewTaskModal(prefill = null) {
     const isEdit = !!prefill;
     const modal = document.getElementById('add-task-modal');
     
-    // Actualizar título y campos del modal existente
     const titleEl = document.getElementById('add-task-title');
     if (titleEl) titleEl.textContent = isEdit ? 'Editar tarea' : 'Nueva tarea';
     
-    // Llenar campos si es edición
     if (isEdit) {
         document.getElementById('new-task-title').value = prefill.title || '';
         document.getElementById('new-task-description').value = prefill.description || '';
@@ -183,7 +176,6 @@ function openNewTaskModal(prefill = null) {
         document.getElementById('new-task-priority').value = prefill.priority || 'medium';
         document.getElementById('new-task-type').value = prefill.type || 'housekeeping';
         
-        // Mostrar/ocultar campos de laundry
         toggleTaskTypeFields(prefill.type === 'laundry');
         
         if (prefill.type === 'laundry') {
@@ -192,7 +184,6 @@ function openNewTaskModal(prefill = null) {
             document.getElementById('laundry-room').value = prefill.room || '';
         }
         
-        // Guardar ID para edición
         modal.dataset.editId = prefill.id;
     } else {
         document.getElementById('add-task-form')?.reset();
@@ -234,7 +225,6 @@ async function saveNewTask() {
         return;
     }
 
-    // Mapear prioridad
     const priorityMap = {
         'low': 'low', 'medium': 'medium', 'high': 'high',
         'baja': 'low', 'media': 'medium', 'alta': 'high',
@@ -255,7 +245,6 @@ async function saveNewTask() {
             created_by: currentUser.id
         };
 
-        // Campos específicos para laundry
         if (taskType === 'laundry') {
             taskData.guest_name = document.getElementById('laundry-guest-name')?.value?.trim();
             taskData.amount = parseFloat(document.getElementById('laundry-amount')?.value) || 0;
@@ -264,10 +253,8 @@ async function saveNewTask() {
 
         let error;
         if (isEdit) {
-            // Actualizar
             ({ error } = await db.from('tasks').update(taskData).eq('id', isEdit));
         } else {
-            // Crear nuevo
             taskData.created_at = new Date().toISOString();
             ({ error } = await db.from('tasks').insert([taskData]));
         }
@@ -282,10 +269,6 @@ async function saveNewTask() {
         showToast('Error: ' + err.message, 'error');
     }
 }
-
-// =====================================================
-// EDITAR TAREA (nueva función del HTML)
-// =====================================================
 
 async function openEditTaskModal(id) {
     try {
@@ -309,7 +292,7 @@ async function openEditTaskModal(id) {
 }
 
 // =====================================================
-// COMPLETAR TAREA (adaptado del original)
+// COMPLETAR TAREA
 // =====================================================
 
 let pendingCompleteTaskId = null;
@@ -351,7 +334,6 @@ async function confirmCompleteTask() {
     }
 
     try {
-        // Obtener la tarea para ver si es laundry con monto
         const { data: task } = await db
             .from('tasks')
             .select('*')
@@ -383,13 +365,14 @@ async function confirmCompleteTask() {
 
 // =====================================================
 // REGISTRO AUTOMÁTICO DE INGRESO POR LAVANDERÍA
+// CORREGIDO: desc -> description
 // =====================================================
 
 async function registerLaundryIncome(task, completedBy) {
     try {
         const { error } = await db.from('movements').insert([{
             date: new Date().toLocaleDateString('es-PA') + ' ' + new Date().toLocaleTimeString('es-PA', {hour:'2-digit',minute:'2-digit'}),
-            desc: `Lavandería completada - ${task.guest_name || 'Huésped'} (${completedBy})`,
+            description: `Lavandería completada - ${task.guest_name || 'Huésped'} (${completedBy})`,  // CORREGIDO
             type: 'ingreso',
             method: 'Efectivo',
             amount: task.amount,
@@ -405,7 +388,7 @@ async function registerLaundryIncome(task, completedBy) {
 }
 
 // =====================================================
-// HISTORIAL DE LIMPIEZA (adaptado del original)
+// HISTORIAL DE LIMPIEZA
 // =====================================================
 
 async function loadCleaningHistory() {
@@ -480,7 +463,7 @@ async function loadCleaningHistory() {
 }
 
 // =====================================================
-// ELIMINAR TAREA (adaptado)
+// ELIMINAR TAREA
 // =====================================================
 
 async function deleteTask(id) {
@@ -497,7 +480,7 @@ async function deleteTask(id) {
 }
 
 // =====================================================
-// REPORTES (mantenido del original)
+// REPORTES (mantenidos del original)
 // =====================================================
 
 async function loadReports() {
@@ -570,7 +553,105 @@ async function loadReports() {
     }
 }
 
-// ... (mantener el resto de funciones de reportes igual que tu original)
+function showAddReportModal() {
+    const modal = document.getElementById('add-report-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeAddReportModal() {
+    const modal = document.getElementById('add-report-modal');
+    if (modal) {
+        modal.style.animation = 'slideDownModal 0.3s ease forwards';
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.animation = '';
+            document.body.style.overflow = '';
+        }, 300);
+    }
+    document.getElementById('add-report-form')?.reset();
+    const preview = document.getElementById('report-photo-preview');
+    if (preview) {
+        preview.src = '';
+        preview.classList.add('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('report-photo')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const preview = document.getElementById('report-photo-preview');
+            if (preview) {
+                preview.src = ev.target.result;
+                preview.classList.remove('hidden');
+                preview.style.animation = 'fadeIn 0.3s ease';
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+async function saveNewReport() {
+    const title       = document.getElementById('report-title')?.value?.trim();
+    const description = document.getElementById('report-description')?.value?.trim();
+    const urgency     = document.querySelector('input[name="report-urgency"]:checked')?.value;
+    const photoFile   = document.getElementById('report-photo')?.files[0];
+
+    if (!title || !description || !urgency) {
+        showToast('Completa todos los campos obligatorios', 'error');
+        return;
+    }
+
+    try {
+        let photoUrl = null;
+        if (photoFile) {
+            const fileName = `reports/${Date.now()}_${photoFile.name}`;
+            const { error: uploadError } = await db.storage.from('receipts').upload(fileName, photoFile);
+            if (!uploadError) {
+                const { data: { publicUrl } } = db.storage.from('receipts').getPublicUrl(fileName);
+                photoUrl = publicUrl;
+            }
+        }
+
+        const { error } = await db.from('reports').insert([{
+            title,
+            description,
+            photo_url: photoUrl,
+            urgency,
+            status: 'open',
+            created_by: currentUser.id,
+            created_at: new Date().toISOString()
+        }]);
+
+        if (error) throw error;
+        showToast('✅ Reporte enviado correctamente', 'success');
+        closeAddReportModal();
+        loadReports();
+    } catch (err) {
+        console.error('Error guardando reporte:', err);
+        showToast('Error: ' + err.message, 'error');
+    }
+}
+
+async function markReportDone(reportId) {
+    if (!confirm('¿Marcar este reporte como completado?')) return;
+    try {
+        const { error } = await db.from('reports').update({
+            status: 'completed',
+            completed_at: new Date().toISOString()
+        }).eq('id', reportId);
+        if (error) throw error;
+        showToast('✅ Reporte completado', 'success');
+        loadReports();
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
+}
 
 // =====================================================
 // FUNCIÓN GLOBAL: Crear tarea de lavandería desde Caja
@@ -595,13 +676,9 @@ async function createLaundryTaskFromCaja(guestName, room, amount) {
         
         if (error) throw error;
         
-        // Recargar si estamos en tareas
-        if (document.getElementById('page-content') && currentPage === 'tareas') {
+        if (document.getElementById('page-content') && typeof currentPage !== 'undefined' && currentPage === 'tareas') {
             renderTareas();
         }
-        
-        // Actualizar badge
-        updateTaskBadge?.();
         
         return data?.[0];
     } catch (err) {
@@ -611,17 +688,44 @@ async function createLaundryTaskFromCaja(guestName, room, amount) {
     }
 }
 
-// Exponer globalmente para uso en caja.js
-window.createLaundryTaskFromCaja = createLaundryTaskFromCaja;
+// =====================================================
+// CIERRE DE MODALES (helper)
+// =====================================================
+
+function closeAddTaskModal() {
+    const modal = document.getElementById('add-task-modal');
+    if (modal) {
+        modal.style.animation = 'slideDownModal 0.3s ease forwards';
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.style.animation = '';
+            document.body.style.overflow = '';
+        }, 300);
+    }
+    document.getElementById('add-task-form')?.reset();
+    toggleTaskTypeFields(false);
+    delete modal.dataset.editId;
+}
+
+// =====================================================
+// EXPORTACIONES GLOBALES
+// =====================================================
+
 window.renderTareas = renderTareas;
 window.setTareasFilter = setTareasFilter;
 window.openNewTaskModal = openNewTaskModal;
-window.openEditTaskModal = openEditTaskModal;
+window.closeAddTaskModal = closeAddTaskModal;
 window.saveNewTask = saveNewTask;
 window.toggleTaskTypeFields = toggleTaskTypeFields;
+window.openEditTaskModal = openEditTaskModal;
 window.deleteTask = deleteTask;
 window.showCompleteTaskModal = showCompleteTaskModal;
 window.closeCompleteTaskModal = closeCompleteTaskModal;
 window.confirmCompleteTask = confirmCompleteTask;
 window.loadCleaningHistory = loadCleaningHistory;
 window.loadReports = loadReports;
+window.showAddReportModal = showAddReportModal;
+window.closeAddReportModal = closeAddReportModal;
+window.saveNewReport = saveNewReport;
+window.markReportDone = markReportDone;
+window.createLaundryTaskFromCaja = createLaundryTaskFromCaja;
